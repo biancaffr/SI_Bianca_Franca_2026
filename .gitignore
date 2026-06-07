@@ -325,10 +325,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Secrets / connection strings
-appsettings.json
-appsettings.Development.json
-
 # OS
 Thumbs.db
 .DS_Store
