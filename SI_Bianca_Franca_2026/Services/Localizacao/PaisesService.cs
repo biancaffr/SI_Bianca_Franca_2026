@@ -1,30 +1,25 @@
 ﻿using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Services.App;
-using System.Runtime.Intrinsics.X86;
+using SI_Bianca_Franca_2026.Services.Base;
 
 namespace SI_Bianca_Franca_2026.Services.Localizacao
 {
-    public class PaisesService
+    public class PaisesService : PaiService<Paises>
     {
         private readonly PaisesRepository _repository;
-        private readonly IAppContextService _appContext;
 
         public PaisesService(PaisesRepository repository, IAppContextService appContext)
+            : base(appContext)
         {
             _repository = repository;
-            _appContext = appContext;
         }
 
         public async Task<List<Paises>> ListarTudo()
-        {
-            return await _repository.ListarTudoAsync();
-        }
+            => await _repository.ListarTudoAsync();
 
-        public async Task<Paises?> Pesquisar(int cod)
-        {
-            return await _repository.PesquisarAsync(cod);
-        }
+        public async Task<Paises?> Pesquisar(int id)
+            => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(Paises entity)
         {
@@ -32,9 +27,7 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
             if (jaExiste)
                 throw new Exception("Já existe um país cadastrado com esse Nome ou Sigla.");
 
-            entity.DataCriacao = DateTime.Now;
-            entity.DataUltimaAlteracao = DateTime.Now;
-            entity.IdUsuarioUltimaAlteracao = _appContext.IdUsuarioAtual;
+            PreencherInsercao(entity);
             await _repository.InserirAsync(entity);
         }
 
@@ -44,24 +37,17 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
             if (jaExiste)
                 throw new Exception("Já existe um país cadastrado com esse Nome ou Sigla.");
 
-            entity.DataUltimaAlteracao = DateTime.Now;
-            entity.IdUsuarioUltimaAlteracao = _appContext.IdUsuarioAtual;
+            PreencherAtualizacao(entity);
             await _repository.AtualizarAsync(entity);
         }
 
-        public async Task Desativar(int cod)
-        {
-            await _repository.AlterarStatusAsync(cod, false, _appContext.IdUsuarioAtual);
-        }
+        public async Task Desativar(int id)
+            => await _repository.AlterarStatusAsync(id, false, _appContext.IdUsuarioAtual);
 
-        public async Task Ativar(int cod)
-        {
-            await _repository.AlterarStatusAsync(cod, true, _appContext.IdUsuarioAtual);
-        }
+        public async Task Ativar(int id)
+            => await _repository.AlterarStatusAsync(id, true, _appContext.IdUsuarioAtual);
 
-        public async Task Remover(int cod)
-        {
-            await _repository.RemoverAsync(cod);
-        }
+        public async Task Remover(int id)
+            => await _repository.RemoverAsync(id);
     }
 }
