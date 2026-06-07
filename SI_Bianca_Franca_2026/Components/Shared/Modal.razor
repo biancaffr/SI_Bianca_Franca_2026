@@ -1,0 +1,23 @@
+﻿@if (Visivel)
+{
+    <div class="modal-overlay" @onclick="Fechar">
+        <div class="modal-container" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h5>@Titulo</h5>
+                <button class="btn-fechar" @onclick="Fechar">&times;</button>
+            </div>
+            <div class="modal-body">
+                @ChildContent
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visivel { get; set; }
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback AoFechar { get; set; }
+
+    private async Task Fechar() => await AoFechar.InvokeAsync();
+}

@@ -1,0 +1,189 @@
+﻿@page "/estados"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Localizacao
+@using SI_Bianca_Franca_2026.Models.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.Components.Shared
+
+@inject EstadosService EstadosService
+@inject PaisesService PaisesService
+
+<div class="mb-3">
+    <h3 class="mb-0">Estados</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i>Novo Estado
+    </button>    
+</div>
+
+@if (estados is null)
+{
+    <p>Carregando...</p>
+}
+else if (!EstadosFiltrados.Any())
+{
+    <p>Nenhum estado encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Estado</th>
+                <th>UF</th>
+                <th>País</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var est in EstadosFiltrados)
+            {
+                <tr>
+                    <td>@est.Id</td>
+                    <td>@est.Estado</td>
+                    <td>@est.Uf</td>
+                    <td>@(est.OPais?.Pais ?? "Não informado")</td>
+                    <td>
+                        <span class="badge @(est.Ativo ? "bg-success" : "bg-danger")">
+                            @(est.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(est)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
+        </div>
+    }
+    
+    <EstadosPage EstadoDto="estadoDtoAtual"
+                 ListaPaises="paisesAtivos"
+                 AoSalvar="SalvarEstado"
+                 AoCancelar="FecharModal" />
+</Modal>
+
+@code {
+    private List<Estados>? estados;
+    private List<Paises> paisesAtivos = new();
+
+    private Estados estadoAtual = new();
+    private EstadosDTO estadoDtoAtual = new();
+
+    private bool modalAberto = false;
+    private string tituloModal = string.Empty;
+    private string filtroStatus = "ativo";
+    private string termoPesquisa = string.Empty;
+
+    private string mensagemErro = string.Empty;
+
+    private IEnumerable<Estados> EstadosFiltrados =>
+        (estados ?? [])
+        .Where(e => filtroStatus switch
+        {
+            "ativo" => e.Ativo,
+            "inativo" => !e.Ativo,
+            _ => true
+        })
+        .Where(e => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    e.Estado.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    e.Uf.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    (e.OPais != null && e.OPais.Pais.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        estados = await EstadosService.ListarTudo();
+
+        var todosPaises = await PaisesService.ListarTudo();
+        paisesAtivos = todosPaises.Where(p => p.Ativo).ToList();
+    }
+
+    private void AbrirCadastro()
+    {
+        mensagemErro = string.Empty;
+        estadoDtoAtual = new EstadosDTO { Ativo = true };
+        tituloModal = "Novo estado";
+        modalAberto = true;
+    }
+
+    private void AbrirEdicao(Estados est)
+    {
+        mensagemErro = string.Empty;
+        estadoDtoAtual = new EstadosDTO
+        {
+            Id = est.Id,
+            Estado = est.Estado,
+            Uf = est.Uf,
+            IdPais = est.IdPais,
+            Ativo = est.Ativo,
+            DataCriacao = est.DataCriacao,
+            DataUltimaAlteracao = est.DataUltimaAlteracao,
+            NomeUsuarioAlteracao = est.NomeUsuarioAlteracao ?? "Sistema"
+        };
+        tituloModal = "Editar estado";
+        modalAberto = true;
+    }
+
+    private async Task SalvarEstado()
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+
+            var estadoParaSalvar = new Estados
+                {
+                    Id = estadoDtoAtual.Id,
+                    Estado = estadoDtoAtual.Estado,
+                    Uf = estadoDtoAtual.Uf,
+                    IdPais = estadoDtoAtual.IdPais,
+                    Ativo = estadoDtoAtual.Ativo
+                };
+
+            if (estadoParaSalvar.Id == 0)
+                await EstadosService.Inserir(estadoParaSalvar);
+            else
+                await EstadosService.Atualizar(estadoParaSalvar);
+
+            await CarregarDados();
+            FecharModal();
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
+    private void FecharModal()
+    {
+        modalAberto = false;
+        estadoAtual = new();
+    }
+}

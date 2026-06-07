@@ -1,0 +1,93 @@
+﻿@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.Models.Localizacao
+
+<EditForm Model="CidadeDto" OnValidSubmit="Salvar">
+    <DataAnnotationsValidator />
+
+    <div class="form-grid">
+
+        <div class="form-group" style="width: 100px;">
+            <label>Código</label>
+            @if (CidadeDto.Id == 0)
+            {
+                <input type="text" class="form-control" disabled placeholder="Novo" />
+            }
+            else
+            {
+                <InputNumber class="form-control" @bind-Value="CidadeDto.Id" disabled />
+            }
+        </div>
+
+        <div class="form-group col-full">
+            <label class="obrigatorio">Estado Pertencente</label>
+            <InputSelect class="form-control" @bind-Value="CidadeDto.IdEstado">
+                <option value="0">Selecione...</option>
+                @foreach (var est in ListaEstados)
+                {
+                    <option value="@est.Id.ToString()">@est.Estado (@est.Uf)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => CidadeDto.IdEstado)" class="text-danger" />
+        </div>
+
+        <div class="form-group col-full">
+            <label class="obrigatorio">Cidade</label>
+            <InputText class="form-control" @bind-Value="CidadeDto.Cidade" maxlength="55" placeholder="Ex.: Foz do Iguaçu" />
+            <ValidationMessage For="@(() => CidadeDto.Cidade)" class="text-danger" />
+        </div>
+
+        <div class="form-group">
+            <label class="obrigatorio">DDD</label>
+            <InputText class="form-control" @bind-Value="CidadeDto.Ddd" maxlength="2" placeholder="Ex.: 45" />
+            <ValidationMessage For="@(() => CidadeDto.Ddd)" class="text-danger" />
+        </div>
+
+        <div class="form-group">
+            <label class="obrigatorio">Código IBGE</label>
+            <InputText class="form-control" @bind-Value="CidadeDto.CodigoIbge" maxlength="7" placeholder="Ex.: 4108304" />
+            <ValidationMessage For="@(() => CidadeDto.CodigoIbge)" class="text-danger" />
+        </div>
+
+        <div class="form-group">
+            <label>Status</label>
+            <div class="form-check form-switch mt-1">
+                <InputCheckbox class="form-check-input" @bind-Value="CidadeDto.Ativo" />
+                <label class="form-check-label">@(CidadeDto.Ativo ? "Ativo" : "Inativo")</label>
+            </div>
+        </div>
+    </div>
+    @if (CidadeDto.Id != 0)
+    {
+        <hr />
+        <div class="form-grid auditoria">
+            <div class="form-group">
+                <label>Data de criação</label>
+                <input class="form-control" disabled value="@CidadeDto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+            </div>
+
+            <div class="form-group">
+                <label>Última alteração</label>
+                <input class="form-control" disabled value="@CidadeDto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+            </div>
+
+            <div class="form-group col-full">
+                <label>Alterado por</label>
+                <input class="form-control" disabled value="@CidadeDto.NomeUsuarioAlteracao" />
+            </div>
+        </div>
+    }
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" @onclick="() => AoCancelar.InvokeAsync()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired] public CidadesDTO CidadeDto { get; set; } = new();
+    [Parameter, EditorRequired] public List<Estados> ListaEstados { get; set; } = new();
+    [Parameter] public EventCallback AoSalvar { get; set; }
+    [Parameter] public EventCallback AoCancelar { get; set; }
+
+    private async Task Salvar() => await AoSalvar.InvokeAsync();
+}

@@ -1,0 +1,194 @@
+﻿@page "/cidades"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Localizacao
+@using SI_Bianca_Franca_2026.Models.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.Components.Shared
+
+@inject CidadesService CidadesService
+@inject EstadosService EstadosService
+
+<div class="mb-3">
+    <h3 class="mb-0">Cidades</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i>Nova Cidade
+    </button>
+</div>
+
+@if (cidades is null)
+{
+    <p>Carregando...</p>
+}
+else if (!CidadesFiltradas.Any())
+{
+    <p>Nenhuma cidade encontrada.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Cidade</th>
+                <th>Estado</th>
+                <th>DDD</th>
+                <th>Código IBGE</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cid in CidadesFiltradas)
+            {
+                <tr>
+                    <td>@cid.Id</td>
+                    <td>@cid.Cidade</td>
+                    <td>@(cid.OEstado != null ? $"{cid.OEstado.Estado} ({cid.OEstado.Uf})" : "Não informado")</td>
+                    <td>@cid.Ddd</td>
+                    <td>@cid.CodigoIbge</td>
+                    <td>
+                        <span class="badge @(cid.Ativo ? "bg-success" : "bg-danger")">
+                            @(cid.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(cid)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
+        </div>
+    }
+
+    <CidadesPage CidadeDto="cidadeDtoAtual"
+                 ListaEstados="estadosAtivos"
+                 AoSalvar="SalvarCidade"
+                 AoCancelar="FecharModal" />
+</Modal>
+
+@code {
+    private List<Cidades>? cidades;
+    private List<Estados> estadosAtivos = new();
+
+    private Cidades cidadeAtual = new();
+    private CidadesDTO cidadeDtoAtual = new();
+
+    private bool modalAberto = false;
+    private string tituloModal = string.Empty;
+    private string filtroStatus = "ativo";
+    private string termoPesquisa = string.Empty;
+    private string mensagemErro = string.Empty;
+
+    private IEnumerable<Cidades> CidadesFiltradas =>
+        (cidades ?? [])
+        .Where(c => filtroStatus switch
+        {
+            "ativo" => c.Ativo,
+            "inativo" => !c.Ativo,
+            _ => true
+        })
+        .Where(c => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    c.Cidade.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    c.CodigoIbge.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    c.Ddd.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    (c.OEstado != null && c.OEstado.Estado.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        cidades = await CidadesService.ListarTudo();
+
+        var todosEstados = await EstadosService.ListarTudo();
+        estadosAtivos = todosEstados.Where(e => e.Ativo).ToList();
+    }
+
+    private void AbrirCadastro()
+    {
+        mensagemErro = string.Empty;
+        cidadeDtoAtual = new CidadesDTO { Ativo = true };
+        tituloModal = "Nova cidade";
+        modalAberto = true;
+    }
+
+    private void AbrirEdicao(Cidades cid)
+    {
+        mensagemErro = string.Empty;
+        cidadeDtoAtual = new CidadesDTO
+        {
+            Id = cid.Id,
+            Cidade = cid.Cidade,
+            IdEstado = cid.IdEstado,
+            CodigoIbge = cid.CodigoIbge,
+            Ddd = cid.Ddd,
+            Ativo = cid.Ativo,
+            DataCriacao = cid.DataCriacao,
+            DataUltimaAlteracao = cid.DataUltimaAlteracao,
+            NomeUsuarioAlteracao = cid.NomeUsuarioAlteracao ?? "Sistema"
+        };
+        tituloModal = "Editar cidade";
+        modalAberto = true;
+    }
+
+    private async Task SalvarCidade()
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+
+            var cidadeParaSalvar = new Cidades
+            {
+                Id = cidadeDtoAtual.Id,
+                Cidade = cidadeDtoAtual.Cidade,
+                IdEstado = cidadeDtoAtual.IdEstado,
+                CodigoIbge = cidadeDtoAtual.CodigoIbge,
+                Ddd = cidadeDtoAtual.Ddd,
+                Ativo = cidadeDtoAtual.Ativo
+            };
+
+            if (cidadeParaSalvar.Id == 0)
+                await CidadesService.Inserir(cidadeParaSalvar);
+            else
+                await CidadesService.Atualizar(cidadeParaSalvar);
+
+            await CarregarDados();
+            FecharModal();
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
+    private void FecharModal()
+    {
+        modalAberto = false;
+        cidadeAtual = new();
+    }
+}

@@ -1,0 +1,24 @@
+﻿.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.col-full {
+    grid-column: 1 / -1;
+}
+
+.col-1-3 {
+    grid-column: span 1;
+}
+
+.col-2-3 {
+    grid-column: span 2;
+}
+
+.form-grid-auditoria {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+}

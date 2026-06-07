@@ -1,0 +1,187 @@
+﻿@page "/paises"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Localizacao
+@using SI_Bianca_Franca_2026.Models.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.Components.Shared
+@inject PaisesService PaisesService
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Países</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i> Novo País
+    </button>
+</div>
+
+@if (paises is null)
+{
+    <p>Carregando...</p>
+}
+else if (!PaisesFiltrados.Any())
+{
+    <p>Nenhum país encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>País</th>
+                <th>Sigla</th>
+                <th>DDI</th>
+                <th>Moeda</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pais in PaisesFiltrados)
+            {
+                <tr>
+                    <td>@pais.Id</td>
+                    <td>@pais.Pais</td>
+                    <td>@pais.Sigla</td>
+                    <td>@pais.Ddi</td>
+                    <td>@pais.Moeda</td>
+                    <td>
+                        <span class="badge @(pais.Ativo ? "bg-success" : "bg-danger")">
+                            @(pais.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(pais)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
+        </div>
+    }
+    <PaisesPage PaisDto="paisDtoAtual"
+                AoSalvar="SalvarPais"
+                AoCancelar="FecharModal" />
+</Modal>
+
+@code {
+    private List<Paises>? paises;
+    private Paises paisAtual = new();
+    private PaisesDTO paisDtoAtual = new();
+
+    private bool modalAberto = false;
+    private string tituloModal = string.Empty;
+    private string filtroStatus = "ativo";
+    private string termoPesquisa = string.Empty;
+
+    private string mensagemErro = string.Empty;
+
+
+    private IEnumerable<Paises> PaisesFiltrados =>
+        (paises ?? [])
+        .Where(p => filtroStatus switch
+        {
+            "ativo" => p.Ativo,
+            "inativo" => !p.Ativo,
+            _ => true
+        })
+        .Where(p => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    p.Pais.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    p.Sigla.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    p.Ddi.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    p.Moeda.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarPaises();
+    }
+
+    private async Task CarregarPaises()
+    {
+        paises = await PaisesService.ListarTudo();
+    }
+
+    private void AbrirCadastro()
+    {
+        mensagemErro = string.Empty;
+        paisDtoAtual = new PaisesDTO { Ativo = true };
+        tituloModal = "Novo país";
+        modalAberto = true;
+    }
+
+    private void AbrirEdicao(Paises pais)
+    {
+        mensagemErro = string.Empty;
+        paisDtoAtual = new PaisesDTO
+        {
+            Id = pais.Id,
+            Pais = pais.Pais,
+            Sigla = pais.Sigla,
+            Ddi = pais.Ddi,
+            Moeda = pais.Moeda,
+            Ativo = pais.Ativo,
+            DataCriacao = pais.DataCriacao,
+            DataUltimaAlteracao = pais.DataUltimaAlteracao,
+            NomeUsuarioAlteracao = pais.NomeUsuarioAlteracao ?? "Sistema"
+        };
+        tituloModal = "Editar país";
+        modalAberto = true;
+    }
+
+    private async Task SalvarPais()
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+        var paisParaSalvar = new Paises
+        {
+            Id = paisDtoAtual.Id,
+            Pais = paisDtoAtual.Pais,
+            Sigla = paisDtoAtual.Sigla,
+            Ddi = paisDtoAtual.Ddi,
+            Moeda = paisDtoAtual.Moeda,
+            Ativo = paisDtoAtual.Ativo
+        };
+
+        if (paisParaSalvar.Id == 0)
+            await PaisesService.Inserir(paisParaSalvar);
+        else
+            await PaisesService.Atualizar(paisParaSalvar);
+
+        await CarregarPaises();
+        FecharModal();
+    }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
+    private void FecharModal()
+    {
+        modalAberto = false;
+        paisAtual = new();
+    }
+
+}
