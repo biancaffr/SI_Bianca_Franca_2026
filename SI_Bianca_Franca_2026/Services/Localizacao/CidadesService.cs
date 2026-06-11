@@ -21,6 +21,10 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
         public async Task<Cidades?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
+        public async Task<List<Cidades>> ListarPorEstado(int idEstado)
+            => await _repository.ListarPorEstadoAsync(idEstado);
+
+
         public async Task Inserir(Cidades entity)
         {
             bool cidadeExiste = await _repository.ExisteCidadeCadastradaAsync(entity.Cidade, entity.IdEstado);

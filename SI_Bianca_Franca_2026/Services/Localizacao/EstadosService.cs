@@ -17,6 +17,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task<List<Estados>> ListarTudo()
             => await _repository.ListarTudoAsync();
+        public async Task<List<Estados>> ListarPorPais(int idPais)
+            => await _repository.ListarPorPaisAsync(idPais);
 
         public async Task<Estados?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);

@@ -1,5 +1,5 @@
-﻿using MySql.Data.MySqlClient;
-using Dapper;
+﻿using Dapper;
+using MySql.Data.MySqlClient;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 
 namespace SI_Bianca_Franca_2026.Repositories.Localizacao
@@ -13,45 +13,62 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             _stringConexao = configuration.GetConnectionString("DefaultConnection");
         }
 
+        private static string SqlBase => @"
+            SELECT
+                e.id,
+                e.estado,
+                e.uf,
+                e.id_pais               AS IdPais,
+                e.data_criacao          AS DataCriacao,
+                e.data_ultima_alteracao AS DataUltimaAlteracao,
+                e.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
+                e.ativo,
+                u.nome                  AS NomeUsuarioAlteracao,
+                p.id,
+                p.pais,
+                p.sigla
+            FROM estados e
+            INNER JOIN paises p ON e.id_pais = p.id
+            LEFT JOIN usuarios u ON e.id_usuario_ultima_alteracao = u.id";
+
+        private static string SqlPesquisar => SqlBase + " WHERE e.id = @Id";
+        private static string SqlListarPorPais => SqlBase + " WHERE e.id_pais = @IdPais AND e.ativo = 1";
+
+        private static Estados MapearEstado(Estados estado, Paises pais)
+        {
+            estado.OPais = pais;
+            return estado;
+        }
+
         public async Task<List<Estados>> ListarTudoAsync()
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"
-                            SELECT
-                                e.id,
-                                e.estado,
-                                e.uf,
-                                e.id_pais               AS IdPais,
-                                e.data_criacao          AS DataCriacao,
-                                e.data_ultima_alteracao AS DataUltimaAlteracao,
-                                e.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
-                                e.ativo,
-                                u.nome                  AS NomeUsuarioAlteracao,
-                                p.id,
-                                p.pais,
-                                p.sigla
-                            FROM estados e
-                            INNER JOIN paises p ON e.id_pais = p.id
-                            LEFT JOIN usuarios u ON e.id_usuario_ultima_alteracao = u.id";
-
             var resultado = await conexao.QueryAsync<Estados, Paises, Estados>(
-                sql,
-                (estado, pais) =>
-                {
-                    estado.OPais = pais;
-                    return estado;
-                },
+                SqlBase,
+                MapearEstado,
                 splitOn: "id"
             );
-
             return resultado.ToList();
+        }
+
+        public async Task<List<Estados>> ListarPorPaisAsync(int idPais)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            return (await conexao.QueryAsync<Estados>(
+                SqlListarPorPais,
+                new { IdPais = idPais })).ToList();
         }
 
         public async Task<Estados?> PesquisarAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            return await conexao.QueryFirstOrDefaultAsync<Estados>(
-                "SELECT * FROM estados WHERE id = @Id", new { Id = id });
+            var resultado = await conexao.QueryAsync<Estados, Paises, Estados>(
+                SqlPesquisar,
+                MapearEstado,
+                splitOn: "id",
+                param: new { Id = id }
+            );
+            return resultado.FirstOrDefault();
         }
 
         public async Task InserirAsync(Estados entity)

@@ -1,7 +1,9 @@
 using SI_Bianca_Franca_2026.Components;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
+using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Localizacao;
+using SI_Bianca_Franca_2026.Services.Pessoa;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,18 @@ builder.Services.AddScoped<EstadosService>();
 
 builder.Services.AddScoped<CidadesRepository>();
 builder.Services.AddScoped<CidadesService>();
+
+builder.Services.AddScoped<ClientesRepository>();
+builder.Services.AddScoped<ClientesService>();
+
+builder.Services.AddScoped<EmitentesRepository>();
+builder.Services.AddScoped<EmitentesService>();
+
+builder.Services.AddScoped<FornecedoresRepository>();
+builder.Services.AddScoped<FornecedoresService>();
+
+builder.Services.AddScoped<TransportadorasRepository>();
+builder.Services.AddScoped<TransportadorasService>();
 
 var app = builder.Build();
 

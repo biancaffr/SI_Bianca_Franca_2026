@@ -1,0 +1,95 @@
+﻿@page "/transportadoras"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Pessoa
+@using SI_Bianca_Franca_2026.Models.Pessoa
+@inject TransportadorasService TransportadorasService
+@inject NavigationManager Nav
+
+<div class="mb-3">
+    <h3 class="mb-0">Transportadoras</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/transportadoras/novo")'>
+        <i class="bi bi-plus-lg me-1"></i>Nova Transportadora
+    </button>
+</div>
+
+@if (transportadoras is null)
+{
+    <p>Carregando...</p>
+}
+else if (!TransportadorasFiltrados.Any())
+{
+    <p>Nenhuma transportadora encontrada.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Nome / Razão Social</th>
+                <th>CPF / CNPJ</th>
+                <th>RNTRC</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in TransportadorasFiltrados)
+            {
+                <tr>
+                    <td>@t.Id</td>
+                    <td>@(t.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
+                    <td>@t.NomeRazaoSocial</td>
+                    <td>@(t.CpfCnpj ?? "—")</td>
+                    <td>@(t.Rntrc ?? "—")</td>
+                    <td>
+                        <span class="badge @(t.Ativo ? "bg-success" : "bg-danger")">
+                            @(t.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick='() => Nav.NavigateTo($"/transportadoras/editar/{t.Id}")'>
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Transportadoras>? transportadoras;
+    private string filtroStatus = "ativo";
+    private string termoPesquisa = string.Empty;
+
+    private IEnumerable<Transportadoras> TransportadorasFiltrados =>
+        (transportadoras ?? [])
+        .Where(t => filtroStatus switch
+        {
+            "ativo" => t.Ativo,
+            "inativo" => !t.Ativo,
+            _ => true
+        })
+        .Where(t => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    t.NomeRazaoSocial.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    (t.CpfCnpj != null && t.CpfCnpj.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)) ||
+                    (t.ApelidoNomeFantasia != null && t.ApelidoNomeFantasia.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        transportadoras = await TransportadorasService.ListarTudo();
+    }
+}

@@ -1,0 +1,95 @@
+﻿@page "/emitentes"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Pessoa
+@using SI_Bianca_Franca_2026.Models.Pessoa
+@inject EmitentesService EmitentesService
+@inject NavigationManager Nav
+
+<div class="mb-3">
+    <h3 class="mb-0">Emitentes</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/emitentes/novo")'>
+        <i class="bi bi-plus-lg me-1"></i>Novo Emitente
+    </button>
+</div>
+
+@if (emitentes is null)
+{
+    <p>Carregando...</p>
+}
+else if (!EmitentesFiltrados.Any())
+{
+    <p>Nenhum emitente encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Nome / Razão Social</th>
+                <th>CPF / CNPJ</th>
+                <th>Regime Tributário</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in EmitentesFiltrados)
+            {
+                <tr>
+                    <td>@e.Id</td>
+                    <td>@(e.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
+                    <td>@e.NomeRazaoSocial</td>
+                    <td>@(e.CpfCnpj ?? "—")</td>
+                    <td>@(e.RegimeTributario ?? "—")</td>
+                    <td>
+                        <span class="badge @(e.Ativo ? "bg-success" : "bg-danger")">
+                            @(e.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick='() => Nav.NavigateTo($"/emitentes/editar/{e.Id}")'>
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Emitentes>? emitentes;
+    private string filtroStatus = "ativo";
+    private string termoPesquisa = string.Empty;
+
+    private IEnumerable<Emitentes> EmitentesFiltrados =>
+        (emitentes ?? [])
+        .Where(e => filtroStatus switch
+        {
+            "ativo" => e.Ativo,
+            "inativo" => !e.Ativo,
+            _ => true
+        })
+        .Where(e => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    e.NomeRazaoSocial.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    (e.CpfCnpj != null && e.CpfCnpj.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)) ||
+                    (e.ApelidoNomeFantasia != null && e.ApelidoNomeFantasia.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        emitentes = await EmitentesService.ListarTudo();
+    }
+}

@@ -13,47 +13,64 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             _stringConexao = configuration.GetConnectionString("DefaultConnection");
         }
 
+        private static string SqlBase => @"
+            SELECT
+                c.id,
+                c.cidade,
+                c.id_estado             AS IdEstado,
+                c.codigo_ibge           AS CodigoIbge,
+                c.ddd,
+                c.data_criacao          AS DataCriacao,
+                c.data_ultima_alteracao AS DataUltimaAlteracao,
+                c.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
+                c.ativo,
+                u.nome                  AS NomeUsuarioAlteracao,
+                e.id,
+                e.estado,
+                e.uf,
+                e.id_pais               AS IdPais
+            FROM cidades c
+            INNER JOIN estados e ON c.id_estado = e.id
+            LEFT JOIN usuarios u ON c.id_usuario_ultima_alteracao = u.id";
+
+        private static string SqlPesquisar => SqlBase + " WHERE c.id = @Id";
+        private static string SqlListarPorEstado => SqlBase + " WHERE c.id_estado = @IdEstado AND c.ativo = 1";
+
+        private static Cidades MapearCidade(Cidades cidade, Estados estado)
+        {
+            cidade.OEstado = estado;
+            return cidade;
+        }
+
         public async Task<List<Cidades>> ListarTudoAsync()
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"
-                SELECT
-                    c.id,
-                    c.cidade,
-                    c.id_estado             AS IdEstado,
-                    c.codigo_ibge           AS CodigoIbge,
-                    c.ddd,
-                    c.data_criacao          AS DataCriacao,
-                    c.data_ultima_alteracao AS DataUltimaAlteracao,
-                    c.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
-                    c.ativo,
-                    u.nome                  AS NomeUsuarioAlteracao,
-                    e.id,
-                    e.estado,
-                    e.uf,
-                    e.id_pais               AS IdPais
-                FROM cidades c
-                INNER JOIN estados e ON c.id_estado = e.id
-                LEFT JOIN usuarios u ON c.id_usuario_ultima_alteracao = u.id";
-
             var resultado = await conexao.QueryAsync<Cidades, Estados, Cidades>(
-                sql,
-                (cidade, estado) =>
-                {
-                    cidade.OEstado = estado;
-                    return cidade;
-                },
+                SqlBase,
+                MapearCidade,
                 splitOn: "id"
             );
-
             return resultado.ToList();
+        }
+
+        public async Task<List<Cidades>> ListarPorEstadoAsync(int idEstado)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            return (await conexao.QueryAsync<Cidades>(
+                SqlListarPorEstado,
+                new { IdEstado = idEstado })).ToList();
         }
 
         public async Task<Cidades?> PesquisarAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            return await conexao.QueryFirstOrDefaultAsync<Cidades>(
-                "SELECT * FROM cidades WHERE id = @Id", new { Id = id });
+            var resultado = await conexao.QueryAsync<Cidades, Estados, Cidades>(
+                SqlPesquisar,
+                MapearCidade,
+                splitOn: "id",
+                param: new { Id = id }
+            );
+            return resultado.FirstOrDefault();
         }
 
         public async Task InserirAsync(Cidades entity)
@@ -125,5 +142,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
                 new { CodigoIbge = codigoIbge, Id = ignorarId });
             return qtde > 0;
         }
+
     }
 }
