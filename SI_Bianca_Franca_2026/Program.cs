@@ -1,9 +1,11 @@
 using SI_Bianca_Franca_2026.Components;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
+using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Localizacao;
 using SI_Bianca_Franca_2026.Services.Pessoa;
+using SI_Bianca_Franca_2026.Services.Produto;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,21 @@ builder.Services.AddScoped<FornecedoresService>();
 
 builder.Services.AddScoped<TransportadorasRepository>();
 builder.Services.AddScoped<TransportadorasService>();
+
+builder.Services.AddScoped<VeiculosRepository>();
+builder.Services.AddScoped<VeiculosService>();
+
+builder.Services.AddScoped<CategoriasRepository>();
+builder.Services.AddScoped<CategoriasService>();
+
+builder.Services.AddScoped<UnidadesMedidaRepository>();
+builder.Services.AddScoped<UnidadesMedidaService>();
+
+builder.Services.AddScoped<SkuAtributosChavesRepository>();
+builder.Services.AddScoped<SkuAtributosChavesService>();
+
+builder.Services.AddScoped<MetodosPagamentoRepository>();
+builder.Services.AddScoped<MetodosPagamentoService>();
 
 var app = builder.Build();
 

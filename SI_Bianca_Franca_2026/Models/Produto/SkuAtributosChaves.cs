@@ -2,10 +2,9 @@
 
 namespace SI_Bianca_Franca_2026.Models.Produto
 {
-    public class Categorias : Pai
+    public class SkuAtributosChaves : Pai
     {
-        public string Categoria { get; set; } = string.Empty;
-        public string? Descricao { get; set; }
+        public string Chave { get; set; } = string.Empty;
         public string NomeUsuarioAlteracao { get; set; } = string.Empty;
     }
 }
