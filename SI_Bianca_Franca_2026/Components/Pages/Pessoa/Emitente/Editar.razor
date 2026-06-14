@@ -34,169 +34,134 @@ else
     <EditForm Model="dto" OnValidSubmit="Salvar">
         <DataAnnotationsValidator />
 
-        <div class="card mb-3">
-            <div class="card-header">Identificação</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
 
-                    <div class="form-group" style="width: 80px;">
-                        <label>Código</label>
-                        <InputNumber class="form-control" @bind-Value="dto.Id" disabled />
-                    </div>
+            <div class="form-group" style="width: 80px;">
+                <label>Código</label>
+                <InputNumber class="form-control" @bind-Value="dto.Id" disabled />
+            </div>
 
-                    <div class="form-group" style="justify-self: end;">
-                        <label>Status</label>
-                        <div class="form-check form-switch mt-1">
-                            <InputCheckbox class="form-check-input" @bind-Value="dto.Ativo" />
-                            <label class="form-check-label">@(dto.Ativo ? "Ativo" : "Inativo")</label>
-                        </div>
-                    </div>
+            <div class="form-group" style="width: 165px;">
+                <label class="obrigatorio">Tipo</label>
+                <InputSelect class="form-select" @bind-Value="dto.TipoPessoa">
+                    <option value="FISICA">Pessoa Física</option>
+                    <option value="JURIDICA">Pessoa Jurídica</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => dto.TipoPessoa)" class="text-danger" />
+            </div>
 
-                    <div class="form-group col-full">
-                        <label class="obrigatorio">Tipo de Pessoa</label>
-                        <InputSelect class="form-control" @bind-Value="dto.TipoPessoa">
-                            <option value="FISICA">Pessoa Física</option>
-                            <option value="JURIDICA">Pessoa Jurídica</option>
-                        </InputSelect>
-                        <ValidationMessage For="@(() => dto.TipoPessoa)" class="text-danger" />
-                    </div>
+            <div class="form-group" style="width: 670px;">
+                <label class="obrigatorio">Fornecedor</label>
+                <InputText class="form-control" @bind-Value="dto.NomeRazaoSocial" maxlength="60" />
+                <ValidationMessage For="@(() => dto.NomeRazaoSocial)" class="text-danger" />
+            </div>
 
-                    <div class="form-group col-full">
-                        <label class="obrigatorio">@(dto.TipoPessoa == "FISICA" ? "Nome" : "Razão Social")</label>
-                        <InputText class="form-control" @bind-Value="dto.NomeRazaoSocial" maxlength="150" />
-                        <ValidationMessage For="@(() => dto.NomeRazaoSocial)" class="text-danger" />
-                    </div>
+            <div class="form-group" style="width: 460px">
+                <label>@(dto.TipoPessoa == "FISICA" ? "Apelido" : "Nome Fantasia")</label>
+                <InputText class="form-control" @bind-Value="dto.ApelidoNomeFantasia" maxlength="40" />
+            </div>
 
-                    <div class="form-group col-full">
-                        <label>@(dto.TipoPessoa == "FISICA" ? "Apelido" : "Nome Fantasia")</label>
-                        <InputText class="form-control" @bind-Value="dto.ApelidoNomeFantasia" maxlength="100" />
-                    </div>
+            <div class="form-group" style="width: 135px;">
+                <label>CEP</label>
+                <InputText class="form-control" @bind-Value="dto.Cep" maxlength="9" />
+            </div>
 
-                    <div class="form-group col-full">
-                        <label class="obrigatorio">Nacionalidade</label>
-                        <InputSelect class="form-control" @bind-Value="dto.IdPais"
-                                     @bind-Value:after="AoMudarPais">
-                            <option value="0">Selecione...</option>
-                            @foreach (var p in paises)
-                            {
-                                <option value="@p.Id.ToString()">@p.Pais</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
-                    </div>
+            <div class="form-group" style="width: 565px;">
+                <label>Logradouro</label>
+                <InputText class="form-control" @bind-Value="dto.Logradouro" maxlength="50" />
+            </div>
 
-                    <div class="form-group">
-                        <label class="@(EhBrasileiro ? "obrigatorio" : "")">
-                            @(dto.TipoPessoa == "FISICA" ? "CPF" : "CNPJ")
-                        </label>
-                        <InputText class="form-control" @bind-Value="dto.CpfCnpj" maxlength="20" />
-                        <ValidationMessage For="@(() => dto.CpfCnpj)" class="text-danger" />
-                    </div>
+            <div class="form-group" style="width: 75px;">
+                <label>Número</label>
+                <InputText class="form-control" @bind-Value="dto.Numero" maxlength="5" />
+            </div>
 
-                    <div class="form-group">
-                        <label>@(dto.TipoPessoa == "FISICA" ? "RG" : "Inscrição Estadual")</label>
-                        <InputText class="form-control" @bind-Value="dto.RgIe" maxlength="20" />
-                    </div>
-                </div>
+            <div class="form-group" style="width: 565px;">
+                <label>Bairro</label>
+                <InputText class="form-control" @bind-Value="dto.Bairro" maxlength="50" />
+            </div>
+
+            <div class="form-group" style="width: 565px;">
+                <label>Complemento</label>
+                <InputText class="form-control" @bind-Value="dto.Complemento" maxlength="50" />
+            </div>
+
+            <div class="form-group" style="width: 565px;">
+                <label class="obrigatorio">País</label>
+                <InputSelect class="form-select" @bind-Value="dto.IdPais"
+                             @bind-Value:after="AoMudarPais">
+                    <option value="0">Selecione...</option>
+                    @foreach (var p in paises)
+                    {
+                        <option value="@p.Id.ToString()">@p.Pais</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="width: 545px;">
+                <label>Estado</label>
+                <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
+                             @bind-Value:after="AoMudarEstado">
+                    <option value="0">Selecione...</option>
+                    @foreach (var e in estadosFiltrados)
+                    {
+                        <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="form-group" style="width: 545px;">
+                <label>Cidade</label>
+                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
+                    <option value="0">Selecione...</option>
+                    @foreach (var c in cidadesFiltradas)
+                    {
+                        <option value="@c.Id.ToString()">@c.Cidade</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="form-group" style="width: 135px;">
+                <label>Celular</label>
+                <InputText class="form-control" @bind-Value="dto.Telefone" maxlength="12" />
+            </div>
+
+            <div class="form-group" style="width: 565px;">
+                <label>E-mail</label>
+                <InputText class="form-control" @bind-Value="dto.Email" maxlength="50" />
+                <ValidationMessage For="@(() => dto.Email)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="width: 150px;">
+                <label class="@(EhBrasileiro ? "obrigatorio" : "")">
+                    @(dto.TipoPessoa == "FISICA" ? "CPF" : "CNPJ")
+                </label>
+                <InputText class="form-control" @bind-Value="dto.CpfCnpj" maxlength="14" />
+                <ValidationMessage For="@(() => dto.CpfCnpj)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="width: 150px;">
+                <label>@(dto.TipoPessoa == "FISICA" ? "RG" : "Inscrição Estadual")</label>
+                <InputText class="form-control" @bind-Value="dto.RgIe" maxlength="13" />
+            </div>
+
+            <div class="form-group">
+                <label>Inscrição Municipal</label>
+                <InputText class="form-control" @bind-Value="dto.InscricaoMunicipal" maxlength="20" />
+            </div>
+
+            <div class="form-group" style="width: 280px;">
+                <label>Regime Tributário</label>
+                <InputSelect class="form-control" @bind-Value="dto.RegimeTributario">
+                    <option value="">Selecione...</option>
+                    @foreach (var r in RegimesTributarios)
+                    {
+                        <option value="@r.Key">@r.Value</option>
+                    }
+                </InputSelect>
             </div>
         </div>
-
-        <div class="card mb-3">
-            <div class="card-header">Endereço</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Estado</label>
-                        <InputSelect class="form-control" @bind-Value="idEstadoSelecionado"
-                                     @bind-Value:after="AoMudarEstado">
-                            <option value="0">Selecione...</option>
-                            @foreach (var e in estadosFiltrados)
-                            {
-                                <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Cidade</label>
-                        <InputSelect class="form-control" @bind-Value="dto.IdCidade">
-                            <option value="0">Selecione...</option>
-                            @foreach (var c in cidadesFiltradas)
-                            {
-                                <option value="@c.Id.ToString()">@c.Cidade</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="form-group">
-                        <label>CEP</label>
-                        <InputText class="form-control" @bind-Value="dto.Cep" maxlength="9" />
-                    </div>
-
-                    <div class="form-group col-full">
-                        <label>Logradouro</label>
-                        <InputText class="form-control" @bind-Value="dto.Logradouro" maxlength="150" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Número</label>
-                        <InputText class="form-control" @bind-Value="dto.Numero" maxlength="10" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Bairro</label>
-                        <InputText class="form-control" @bind-Value="dto.Bairro" maxlength="80" />
-                    </div>
-
-                    <div class="form-group col-full">
-                        <label>Complemento</label>
-                        <InputText class="form-control" @bind-Value="dto.Complemento" maxlength="100" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header">Contato</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Telefone</label>
-                        <InputText class="form-control" @bind-Value="dto.Telefone" maxlength="20" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>E-mail</label>
-                        <InputText class="form-control" @bind-Value="dto.Email" maxlength="254" />
-                        <ValidationMessage For="@(() => dto.Email)" class="text-danger" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header">Dados Fiscais</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Inscrição Municipal</label>
-                        <InputText class="form-control" @bind-Value="dto.InscricaoMunicipal" maxlength="20" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Regime Tributário</label>
-                        <InputSelect class="form-control" @bind-Value="dto.RegimeTributario">
-                            <option value="">Selecione...</option>
-                            <option value="Simples Nacional">Simples Nacional</option>
-                            <option value="Lucro Presumido">Lucro Presumido</option>
-                            <option value="Lucro Real">Lucro Real</option>
-                            <option value="MEI">MEI</option>
-                        </InputSelect>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="card mb-3">
             <div class="card-header">Observações</div>
             <div class="card-body">
@@ -204,25 +169,20 @@ else
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Informações do Registro</div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div class="form-group">
-                        <label>Data de Criação</label>
-                        <input class="form-control" disabled
-                               value="@dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
-                    </div>
-                    <div class="form-group">
-                        <label>Última Alteração</label>
-                        <input class="form-control" disabled
-                               value="@dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
-                    </div>
-                    <div class="form-group">
-                        <label>Alterado por</label>
-                        <input class="form-control" disabled value="@dto.NomeUsuarioAlteracao" />
-                    </div>
-                </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+            <div class="form-group">
+                <label>Data de Criação</label>
+                <input class="form-control" disabled
+                       value="@dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+            </div>
+            <div class="form-group">
+                <label>Última Alteração</label>
+                <input class="form-control" disabled
+                       value="@dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+            </div>
+            <div class="form-group">
+                <label>Alterado por</label>
+                <input class="form-control" disabled value="@dto.NomeUsuarioAlteracao" />
             </div>
         </div>
 
@@ -326,6 +286,15 @@ else
         else
             cidadesFiltradas = new();
     }
+
+    private static Dictionary<string, string> RegimesTributarios => new()
+    {
+        { "SIMPLES_NACIONAL",         "Simples Nacional" },
+        { "SIMPLES_NACIONAL_EXCESSO", "Simples Nacional — Excesso de sublimite" },
+        { "LUCRO_PRESUMIDO",          "Lucro Presumido" },
+        { "LUCRO_REAL",               "Lucro Real" },
+        { "MEI",                      "MEI" }
+    };
 
     private async Task Salvar()
     {
