@@ -85,16 +85,19 @@ else
                 <InputText class="form-control" @bind-Value="dto.Complemento" maxlength="50" />
             </div>
 
-            <div class="form-group" style="width: 545px;">
-                <label>Cidade</label>
-                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
+            <div class="form-group" style="width: 565px;">
+                <label class="obrigatorio">País</label>
+                <InputSelect class="form-select" @bind-Value="dto.IdPais"
+                             @bind-Value:after="AoMudarPais">
                     <option value="0">Selecione...</option>
-                    @foreach (var c in cidadesFiltradas)
+                    @foreach (var p in paises)
                     {
-                        <option value="@c.Id.ToString()">@c.Cidade</option>
+                        <option value="@p.Id.ToString()">@p.Pais</option>
                     }
                 </InputSelect>
+                <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
             </div>
+
             <div class="form-group" style="width: 545px;">
                 <label>Estado</label>
                 <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
@@ -107,17 +110,15 @@ else
                 </InputSelect>
             </div>
 
-            <div class="form-group" style="width: 565px;">
-                <label class="obrigatorio">País</label>
-                <InputSelect class="form-select" @bind-Value="dto.IdPais"
-                             @bind-Value:after="AoMudarPais">
+            <div class="form-group" style="width: 545px;">
+                <label>Cidade</label>
+                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
                     <option value="0">Selecione...</option>
-                    @foreach (var p in paises)
+                    @foreach (var c in cidadesFiltradas)
                     {
-                        <option value="@p.Id.ToString()">@p.Pais</option>
+                        <option value="@c.Id.ToString()">@c.Cidade</option>
                     }
                 </InputSelect>
-                <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
             </div>
 
             <div class="form-group" style="width: 135px;">

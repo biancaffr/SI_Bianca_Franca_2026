@@ -32,7 +32,20 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             LEFT JOIN usuarios u ON e.id_usuario_ultima_alteracao = u.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE e.id = @Id";
-        private static string SqlListarPorPais => SqlBase + " WHERE e.id_pais = @IdPais AND e.ativo = 1";
+        private static string SqlListarPorPais => @"
+            SELECT
+                e.id,
+                e.estado,
+                e.uf,
+                e.id_pais AS IdPais,
+                e.data_criacao AS DataCriacao,
+                e.data_ultima_alteracao AS DataUltimaAlteracao,
+                e.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
+                e.ativo
+            FROM estados e
+            WHERE e.id_pais = @IdPais
+            AND e.ativo = 1
+            ORDER BY e.estado";
 
         private static Estados MapearEstado(Estados estado, Paises pais)
         {

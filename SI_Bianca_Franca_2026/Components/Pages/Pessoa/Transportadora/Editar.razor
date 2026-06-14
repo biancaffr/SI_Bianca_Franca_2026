@@ -87,28 +87,6 @@ else
                 <InputText class="form-control" @bind-Value="dto.Complemento" maxlength="50" />
             </div>
 
-            <div class="form-group" style="width: 545px;">
-                <label>Cidade</label>
-                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
-                    <option value="0">Selecione...</option>
-                    @foreach (var c in cidadesFiltradas)
-                    {
-                        <option value="@c.Id.ToString()">@c.Cidade</option>
-                    }
-                </InputSelect>
-            </div>
-            <div class="form-group" style="width: 545px;">
-                <label>Estado</label>
-                <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
-                             @bind-Value:after="AoMudarEstado">
-                    <option value="0">Selecione...</option>
-                    @foreach (var e in estadosFiltrados)
-                    {
-                        <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
-                    }
-                </InputSelect>
-            </div>
-
             <div class="form-group" style="width: 565px;">
                 <label class="obrigatorio">País</label>
                 <InputSelect class="form-select" @bind-Value="dto.IdPais"
@@ -122,6 +100,28 @@ else
                 <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
             </div>
 
+            <div class="form-group" style="width: 545px;">
+                <label>Estado</label>
+                <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
+                             @bind-Value:after="AoMudarEstado">
+                    <option value="0">Selecione...</option>
+                    @foreach (var e in estadosFiltrados)
+                    {
+                        <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="form-group" style="width: 545px;">
+                <label>Cidade</label>
+                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
+                    <option value="0">Selecione...</option>
+                    @foreach (var c in cidadesFiltradas)
+                    {
+                        <option value="@c.Id.ToString()">@c.Cidade</option>
+                    }
+                </InputSelect>
+            </div>
             <div class="form-group" style="width: 135px;">
                 <label>Celular</label>
                 <InputText class="form-control" @bind-Value="dto.Telefone" maxlength="12" />
