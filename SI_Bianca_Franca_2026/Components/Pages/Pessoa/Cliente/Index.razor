@@ -39,9 +39,9 @@ else
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Tipo</th>
                 <th>Nome / Razão Social</th>
                 <th>CPF / CNPJ</th>
-                <th>Tipo</th>
                 <th>Telefone</th>
                 <th>País</th>
                 <th>Status</th>
@@ -53,9 +53,9 @@ else
             {
                 <tr>
                     <td>@cli.Id</td>
+                    <td>@(cli.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
                     <td>@cli.NomeRazaoSocial</td>
                     <td>@(cli.CpfCnpj ?? "—")</td>
-                    <td>@(cli.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
                     <td>@(cli.Telefone ?? "—")</td>
                     <td>@(cli.OPais?.Pais ?? "—")</td>
                     <td>

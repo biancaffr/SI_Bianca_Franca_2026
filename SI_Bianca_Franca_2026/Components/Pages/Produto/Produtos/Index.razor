@@ -1,0 +1,109 @@
+﻿@page "/produtos"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Produto
+@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Components.Shared
+@inject ProdutosService ProdutosService
+@inject NavigationManager Nav
+
+<div class="mb-3">
+    <h3 class="mb-0">Produtos</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="filtroTipo">
+        <option value="todos">Todos os tipos</option>
+        <option value="PRODUTO_FINAL">Produto Final</option>
+        <option value="MATERIA_PRIMA">Matéria-Prima</option>
+    </select>
+
+    <select class="w-auto" @bind="filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/produtos/novo")'>
+        <i class="bi bi-plus-lg me-1"></i>Novo Produto
+    </button>
+</div>
+
+@if (produtos is null)
+{
+    <p>Carregando...</p>
+}
+else if (!ProdutosFiltrados.Any())
+{
+    <p>Nenhum produto encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th>Unidade</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in ProdutosFiltrados)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Produto</td>
+                    <td>
+                        <span class="badge @(p.Tipo == "PRODUTO_FINAL" ? "bg-primary" : "bg-warning text-dark")">
+                            @(p.Tipo == "PRODUTO_FINAL" ? "Produto Final" : "Matéria-Prima")
+                        </span>
+                    </td>
+                    <td>@(p.OCategoria?.Categoria ?? "—")</td>
+                    <td>@(p.OUnidadeMedida?.Sigla ?? "—")</td>
+                    <td>
+                        <span class="badge @(p.Ativo ? "bg-success" : "bg-danger")">
+                            @(p.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick='() => Nav.NavigateTo($"/produtos/editar/{p.Id}")'>
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Produtos>? produtos;
+    private string filtroStatus = "ativo";
+    private string filtroTipo = "todos";
+    private string termoPesquisa = string.Empty;
+
+    private IEnumerable<Produtos> ProdutosFiltrados =>
+        (produtos ?? [])
+        .Where(p => filtroStatus switch
+        {
+            "ativo" => p.Ativo,
+            "inativo" => !p.Ativo,
+            _ => true
+        })
+        .Where(p => filtroTipo == "todos" || p.Tipo == filtroTipo)
+        .Where(p => string.IsNullOrWhiteSpace(termoPesquisa) ||
+                    p.Produto.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
+                    (p.OCategoria != null && p.OCategoria.Categoria.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        produtos = await ProdutosService.ListarTudo();
+    }
+}

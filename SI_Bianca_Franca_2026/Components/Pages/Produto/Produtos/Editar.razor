@@ -1,0 +1,550 @@
+﻿@page "/produtos/editar/{Id:int}"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Services.Produto
+@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.DTOs.Produto
+@using SI_Bianca_Franca_2026.Components.Pages.Produto.Shared
+@inject ProdutosService ProdutosService
+@inject SkusService SkusService
+@inject FichasTecnicasService FichasTecnicasService
+@inject CategoriasService CategoriasService
+@inject UnidadesMedidaService UnidadesMedidaService
+@inject SkuAtributosChavesService SkuAtributosChavesService
+@inject NavigationManager Nav
+
+<div class="mb-3 d-flex align-items-center gap-2">
+    <button class="btn btn-sm btn-outline-secondary" @onclick='() => Nav.NavigateTo("/produtos")'>
+        <i class="bi bi-arrow-left"></i>
+    </button>
+    <h3 class="mb-0">Editar Produto</h3>
+</div>
+
+@if (carregando)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
+        </div>
+    }
+
+    <EditForm Model="dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div class="card mb-3">
+            <div class="card-header">Identificação</div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+
+                    <div class="form-group" style="width: 80px;">
+                        <label>Código</label>
+                        <InputNumber class="form-control" @bind-Value="dto.Id" disabled />
+                    </div>
+
+                    <div class="form-group" style="justify-self: end;">
+                        <label>Status</label>
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="dto.Ativo" />
+                            <label class="form-check-label">@(dto.Ativo ? "Ativo" : "Inativo")</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group col-full">
+                        <label class="obrigatorio">Tipo</label>
+                        <input class="form-control" value="@(dto.Tipo == "PRODUTO_FINAL" ? "Produto Final" : "Matéria-Prima")" disabled />
+                    </div>
+
+                    <div class="form-group col-full">
+                        <label class="obrigatorio">Produto</label>
+                        <InputText class="form-control" @bind-Value="dto.Produto" maxlength="150" />
+                        <ValidationMessage For="@(() => dto.Produto)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="obrigatorio">Categoria</label>
+                        <InputSelect class="form-control" @bind-Value="dto.IdCategoria">
+                            <option value="0">Selecione...</option>
+                            @foreach (var c in categorias)
+                            {
+                                <option value="@c.Id.ToString()">@c.Categoria</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => dto.IdCategoria)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="obrigatorio">Unidade de Medida</label>
+                        <InputSelect class="form-control" @bind-Value="dto.IdUnidadeMedida">
+                            <option value="0">Selecione...</option>
+                            @foreach (var u in unidades)
+                            {
+                                <option value="@u.Id.ToString()">@u.Sigla — @u.Descricao</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => dto.IdUnidadeMedida)" class="text-danger" />
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Dados Fiscais</div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+
+                    <div class="form-group">
+                        <label>NCM</label>
+                        <InputText class="form-control" @bind-Value="dto.Ncm" maxlength="8" />
+                        <ValidationMessage For="@(() => dto.Ncm)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>CEST</label>
+                        <InputText class="form-control" @bind-Value="dto.Cest" maxlength="7" />
+                        <ValidationMessage For="@(() => dto.Cest)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Origem</label>
+                        <InputSelect class="form-control" @bind-Value="dto.Origem">
+                            @foreach (var o in OrigensDisponiveis)
+                            {
+                                <option value="@o.Key">@o.Value</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Observações</div>
+            <div class="card-body">
+                <InputTextArea class="form-control" @bind-Value="dto.Observacao" rows="3" />
+            </div>
+        </div>
+
+        @* Seção SKUs — só para MATERIA_PRIMA *@
+        @if (dto.Tipo == "MATERIA_PRIMA")
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>SKUs</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            @onclick="AbrirNovoSku">
+                        <i class="bi bi-plus-lg me-1"></i>Adicionar SKU
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (!skus.Any())
+                    {
+                        <p class="text-muted">Nenhum SKU cadastrado.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>GTIN/EAN</th>
+                                    <th>Preço Custo</th>
+                                    <th>Estoque</th>
+                                    <th>Est. Mín.</th>
+                                    <th>Atributos</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sku in skus)
+                                {
+                                    <tr>
+                                        <td>@sku.Sku</td>
+                                        <td>@(sku.GtinEan ?? "—")</td>
+                                        <td>@(sku.PrecoCusto?.ToString("N4") ?? "—")</td>
+                                        <td>@sku.Estoque.ToString("N4")</td>
+                                        <td>@sku.EstoqueMinimo.ToString("N4")</td>
+                                        <td>@string.Join(", ", sku.Atributos.Select(a => $"{a.OChave?.Chave}: {a.Valor}"))</td>
+                                        <td>
+                                            <span class="badge @(sku.Ativo ? "bg-success" : "bg-danger")">
+                                                @(sku.Ativo ? "Ativo" : "Inativo")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    @onclick="() => AbrirEdicaoSku(sku)">
+                                                Editar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Seção Ficha Técnica — só para PRODUTO_FINAL *@
+        @if (dto.Tipo == "PRODUTO_FINAL")
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Ficha Técnica</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            @onclick="AbrirNovoMaterial">
+                        <i class="bi bi-plus-lg me-1"></i>Adicionar Material
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (!fichas.Any())
+                    {
+                        <p class="text-muted">Nenhum material cadastrado na ficha técnica.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Quantidade</th>
+                                    <th>Unidade</th>
+                                    <th>Observação</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ficha in fichas)
+                                {
+                                    <tr>
+                                        <td>@(ficha.OProdutoMaterial?.Produto ?? "—")</td>
+                                        <td>@ficha.Quantidade.ToString("N4")</td>
+                                        <td>@(ficha.OProdutoMaterial?.OUnidadeMedida?.Sigla ?? "—")</td>
+                                        <td>@(ficha.Observacao ?? "—")</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                                    @onclick="() => AbrirEdicaoMaterial(ficha)">
+                                                Editar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => RemoverMaterial(ficha.Id)">
+                                                Remover
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header">Informações do Registro</div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Data de Criação</label>
+                        <input class="form-control" disabled
+                               value="@dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Última Alteração</label>
+                        <input class="form-control" disabled
+                               value="@dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Alterado por</label>
+                        <input class="form-control" disabled value="@dto.NomeUsuarioAlteracao" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <button type="button" class="btn btn-secondary"
+                    @onclick='() => Nav.NavigateTo("/produtos")'>Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
+}
+
+@* Modal SKU *@
+<SkuModal Visivel="modalSkuAberto"
+          Dto="skuDtoAtual"
+          ChavesDisponiveis="chaves"
+          EhEdicao="skuEhEdicao"
+          AoSalvar="SalvarSku"
+          AoFechar="FecharModalSku" />
+
+@* Modal Ficha Técnica *@
+<FichaTecnicaModal Visivel="modalFichaAberto"
+                   Dto="fichaDtoAtual"
+                   MateriaisPrimas="materiais"
+                   AoSalvar="SalvarFicha"
+                   AoFechar="FecharModalFicha" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ProdutosDTO dto = new();
+    private string mensagemErro = string.Empty;
+    private bool carregando = true;
+
+    private List<Categorias> categorias = new();
+    private List<UnidadesMedida> unidades = new();
+    private List<SkuAtributosChaves> chaves = new();
+    private List<Produtos> materiais = new();
+
+    private List<Skus> skus = new();
+    private List<FichasTecnicas> fichas = new();
+
+    private SkusDTO skuDtoAtual = new();
+    private FichasTecnicasDTO fichaDtoAtual = new();
+    private bool modalSkuAberto = false;
+    private bool modalFichaAberto = false;
+    private bool skuEhEdicao = false;
+
+    private static Dictionary<byte, string> OrigensDisponiveis => new()
+    {
+        { 0, "0 — Nacional" },
+        { 1, "1 — Estrangeira (importação direta)" },
+        { 2, "2 — Estrangeira (adquirida no mercado interno)" },
+        { 3, "3 — Nacional com conteúdo superior a 40%" },
+        { 4, "4 — Nacional (produção conforme processos básicos)" },
+        { 5, "5 — Nacional com conteúdo inferior a 40%" },
+        { 6, "6 — Estrangeira (importação direta, sem similar nacional)" },
+        { 7, "7 — Estrangeira (adquirida no mercado interno, sem similar nacional)" },
+        { 8, "8 — Nacional com conteúdo superior a 70%" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cats = await CategoriasService.ListarTudo();
+        categorias = cats.Where(c => c.Ativo).ToList();
+
+        var uns = await UnidadesMedidaService.ListarTudo();
+        unidades = uns.Where(u => u.Ativo).ToList();
+
+        var chs = await SkuAtributosChavesService.ListarTudo();
+        chaves = chs.Where(c => c.Ativo).ToList();
+
+        var produto = await ProdutosService.Pesquisar(Id);
+        if (produto is null)
+        {
+            Nav.NavigateTo("/produtos");
+            return;
+        }
+
+        dto = new ProdutosDTO
+        {
+            Id = produto.Id,
+            Produto = produto.Produto,
+            Tipo = produto.Tipo,
+            IdCategoria = produto.IdCategoria,
+            IdUnidadeMedida = produto.IdUnidadeMedida,
+            Ncm = produto.Ncm,
+            Cest = produto.Cest,
+            Origem = produto.Origem,
+            Observacao = produto.Observacao,
+            Ativo = produto.Ativo,
+            DataCriacao = produto.DataCriacao,
+            DataUltimaAlteracao = produto.DataUltimaAlteracao,
+            NomeUsuarioAlteracao = produto.NomeUsuarioAlteracao
+        };
+
+        if (produto.Tipo == "MATERIA_PRIMA")
+            skus = await SkusService.ListarPorProduto(Id);
+
+        if (produto.Tipo == "PRODUTO_FINAL")
+        {
+            fichas = await FichasTecnicasService.ListarPorProduto(Id);
+            var mats = await ProdutosService.ListarPorTipo("MATERIA_PRIMA");
+            materiais = mats.Where(m => m.Ativo).ToList();
+        }
+
+        carregando = false;
+    }
+
+    // ─── SKUs (edição — salva imediatamente) ────────────
+    private void AbrirNovoSku()
+    {
+        skuDtoAtual = new SkusDTO { Ativo = true };
+        skuEhEdicao = false;
+        modalSkuAberto = true;
+    }
+
+    private void AbrirEdicaoSku(Skus sku)
+    {
+        skuDtoAtual = new SkusDTO
+        {
+            Sku = sku.Sku,
+            GtinEan = sku.GtinEan,
+            PrecoCusto = sku.PrecoCusto,
+            Estoque = sku.Estoque,
+            EstoqueMinimo = sku.EstoqueMinimo,
+            Ativo = sku.Ativo,
+            Atributos = sku.Atributos.Select(a => new SkusAtributosValoresDTO
+            {
+                IdChave = a.IdChave,
+                Valor = a.Valor
+            }).ToList()
+        };
+        skuEhEdicao = true;
+        modalSkuAberto = true;
+    }
+
+    private async Task SalvarSku(SkusDTO skuDto)
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+            var atributos = skuDto.Atributos.Select(a => new SkusAtributosValores
+            {
+                Sku = skuDto.Sku,
+                IdChave = a.IdChave,
+                Valor = a.Valor
+            }).ToList();
+
+            if (skuEhEdicao)
+            {
+                var sku = new Skus
+                {
+                    Sku = skuDto.Sku,
+                    IdProduto = Id,
+                    GtinEan = skuDto.GtinEan,
+                    PrecoCusto = skuDto.PrecoCusto,
+                    Estoque = skuDto.Estoque,
+                    EstoqueMinimo = skuDto.EstoqueMinimo,
+                    Ativo = skuDto.Ativo
+                };
+                await SkusService.Atualizar(sku, atributos);
+            }
+            else
+            {
+                var sku = new Skus
+                {
+                    Sku = skuDto.Sku,
+                    IdProduto = Id,
+                    GtinEan = skuDto.GtinEan,
+                    PrecoCusto = skuDto.PrecoCusto,
+                    Estoque = skuDto.Estoque,
+                    EstoqueMinimo = skuDto.EstoqueMinimo,
+                    Ativo = skuDto.Ativo
+                };
+                await SkusService.Inserir(sku, atributos);
+            }
+
+            skus = await SkusService.ListarPorProduto(Id);
+            FecharModalSku();
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
+    private void FecharModalSku()
+    {
+        modalSkuAberto = false;
+        skuDtoAtual = new();
+    }
+
+    // ─── Ficha Técnica ───────────────────────────────────
+    private void AbrirNovoMaterial()
+    {
+        fichaDtoAtual = new FichasTecnicasDTO();
+        modalFichaAberto = true;
+    }
+
+    private void AbrirEdicaoMaterial(FichasTecnicas ficha)
+    {
+        fichaDtoAtual = new FichasTecnicasDTO
+        {
+            Id = ficha.Id,
+            IdProdutoMaterial = ficha.IdProdutoMaterial,
+            NomeMaterial = ficha.OProdutoMaterial?.Produto ?? string.Empty,
+            UnidadeMedida = ficha.OProdutoMaterial?.OUnidadeMedida?.Sigla ?? string.Empty,
+            Quantidade = ficha.Quantidade,
+            Observacao = ficha.Observacao
+        };
+        modalFichaAberto = true;
+    }
+
+    private async Task SalvarFicha(FichasTecnicasDTO fichaDto)
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+            var ficha = new FichasTecnicas
+            {
+                Id = fichaDto.Id,
+                IdProduto = Id,
+                IdProdutoMaterial = fichaDto.IdProdutoMaterial,
+                Quantidade = fichaDto.Quantidade,
+                Observacao = fichaDto.Observacao
+            };
+
+            if (fichaDto.Id == 0)
+                await FichasTecnicasService.Inserir(ficha);
+            else
+                await FichasTecnicasService.Atualizar(ficha);
+
+            fichas = await FichasTecnicasService.ListarPorProduto(Id);
+            FecharModalFicha();
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
+    private async Task RemoverMaterial(int idFicha)
+    {
+        await FichasTecnicasService.Remover(idFicha);
+        fichas = await FichasTecnicasService.ListarPorProduto(Id);
+    }
+
+    private void FecharModalFicha()
+    {
+        modalFichaAberto = false;
+        fichaDtoAtual = new();
+    }
+
+    // ─── Salvar produto ──────────────────────────────────
+    private async Task Salvar()
+    {
+        try
+        {
+            mensagemErro = string.Empty;
+            var produto = new Produtos
+            {
+                Id = dto.Id,
+                Produto = dto.Produto,
+                Tipo = dto.Tipo,
+                IdCategoria = dto.IdCategoria,
+                IdUnidadeMedida = dto.IdUnidadeMedida,
+                Ncm = dto.Ncm,
+                Cest = dto.Cest,
+                Origem = dto.Origem,
+                Observacao = dto.Observacao,
+                Ativo = dto.Ativo,
+                DataCriacao = dto.DataCriacao
+            };
+
+            await ProdutosService.Atualizar(produto);
+            Nav.NavigateTo("/produtos");
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+}

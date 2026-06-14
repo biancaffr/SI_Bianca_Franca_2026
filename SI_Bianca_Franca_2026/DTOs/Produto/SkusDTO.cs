@@ -8,8 +8,6 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         [MaxLength(50, ErrorMessage = "Máximo de 50 caracteres")]
         public string Sku { get; set; } = string.Empty;
 
-        public string? SkuOriginal { get; set; } 
-
         [MaxLength(14, ErrorMessage = "Máximo de 14 caracteres")]
         public string? GtinEan { get; set; }
 

@@ -13,11 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Financeiro\" />
     <Folder Include="Models\Comercial\" />
     <Folder Include="Models\Estoque\" />
     <Folder Include="Models\Fiscal\" />
-    <Folder Include="Models\Produto\" />
   </ItemGroup>
 
 </Project>

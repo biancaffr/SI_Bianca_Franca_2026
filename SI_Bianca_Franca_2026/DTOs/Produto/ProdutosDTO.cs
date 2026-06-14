@@ -10,8 +10,6 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         [MaxLength(150, ErrorMessage = "Máximo de 150 caracteres")]
         public string Produto { get; set; } = string.Empty;
 
-        public string? Descricao { get; set; }
-
         [Required(ErrorMessage = "Campo obrigatório")]
         public string Tipo { get; set; } = "PRODUTO_FINAL";
 

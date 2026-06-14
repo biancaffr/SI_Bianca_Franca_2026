@@ -17,7 +17,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             SELECT
                 p.id,
                 p.produto,
-                p.descricao,
                 p.tipo,
                 p.id_categoria              AS IdCategoria,
                 p.id_unidade_medida         AS IdUnidadeMedida,
@@ -89,11 +88,11 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO produtos
-                           (produto, descricao, tipo, id_categoria, id_unidade_medida,
+                           (produto, tipo, id_categoria, id_unidade_medida,
                             ncm, cest, origem, observacao, data_criacao,
                             data_ultima_alteracao, id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Produto, @Descricao, @Tipo, @IdCategoria, @IdUnidadeMedida,
+                           (@Produto, @Tipo, @IdCategoria, @IdUnidadeMedida,
                             @Ncm, @Cest, @Origem, @Observacao, @DataCriacao,
                             @DataUltimaAlteracao, @IdUsuarioUltimaAlteracao, @Ativo);
                            SELECT LAST_INSERT_ID();";
@@ -105,7 +104,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"UPDATE produtos SET
                            produto                       = @Produto,
-                           descricao                     = @Descricao,
                            tipo                          = @Tipo,
                            id_categoria                  = @IdCategoria,
                            id_unidade_medida             = @IdUnidadeMedida,

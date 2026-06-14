@@ -5,7 +5,6 @@ namespace SI_Bianca_Franca_2026.Models.Produto
     public class Produtos : Pai
     {
         public string Produto { get; set; } = string.Empty;
-        public string? Descricao { get; set; }
         public string Tipo { get; set; } = "PRODUTO_FINAL";
         public int IdCategoria { get; set; }
         public int IdUnidadeMedida { get; set; }

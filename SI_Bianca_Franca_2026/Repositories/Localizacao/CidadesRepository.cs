@@ -34,7 +34,20 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             LEFT JOIN usuarios u ON c.id_usuario_ultima_alteracao = u.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE c.id = @Id";
-        private static string SqlListarPorEstado => SqlBase + " WHERE c.id_estado = @IdEstado AND c.ativo = 1";
+        private static string SqlListarPorEstado => @"
+            SELECT
+                c.id,
+                c.cidade,
+                c.id_estado             AS IdEstado,
+                c.codigo_ibge           AS CodigoIbge,
+                c.ddd,
+                c.data_criacao          AS DataCriacao,
+                c.data_ultima_alteracao AS DataUltimaAlteracao,
+                c.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
+                c.ativo
+            FROM cidades c
+            WHERE c.id_estado = @IdEstado AND c.ativo = 1
+            ORDER BY c.cidade";
 
         private static Cidades MapearCidade(Cidades cidade, Estados estado)
         {
@@ -58,7 +71,9 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<Cidades>(
                 SqlListarPorEstado,
-                new { IdEstado = idEstado })).ToList();
+                new { IdEstado = idEstado },
+                commandType: System.Data.CommandType.Text
+            )).ToList();
         }
 
         public async Task<Cidades?> PesquisarAsync(int id)

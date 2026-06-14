@@ -10,7 +10,7 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
         public string TipoPessoa { get; set; } = "FISICA";
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        [MaxLength(150)]
+        [MaxLength(60)]
         public string NomeRazaoSocial { get; set; } = string.Empty;
 
         [MaxLength(20)]
@@ -19,21 +19,21 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
         [MaxLength(20)]
         public string? RgIe { get; set; }
 
-        [MaxLength(100)]
+        [MaxLength(50)]
         public string? ApelidoNomeFantasia { get; set; }
 
         public int? IdCidade { get; set; }
 
-        [MaxLength(80)]
+        [MaxLength(50)]
         public string? Bairro { get; set; }
 
-        [MaxLength(150)]
+        [MaxLength(50)]
         public string? Logradouro { get; set; }
 
-        [MaxLength(10)]
+        [MaxLength(5)]
         public string? Numero { get; set; }
 
-        [MaxLength(100)]
+        [MaxLength(50)]
         public string? Complemento { get; set; }
 
         [MaxLength(9)]
