@@ -3,7 +3,7 @@
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.DTOs.Localizacao
-@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 
 @inject CidadesService CidadesService
 @inject EstadosService EstadosService
@@ -75,19 +75,8 @@ else
     </table>
 }
 
-<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
-    @if (!string.IsNullOrEmpty(mensagemErro))
-    {
-        <div class="alert alert-danger mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
-        </div>
-    }
+<CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalva" />
 
-    <CidadesPage CidadeDto="cidadeDtoAtual"
-                 ListaEstados="estadosAtivos"
-                 AoSalvar="SalvarCidade"
-                 AoCancelar="FecharModal" />
-</Modal>
 
 @code {
     private List<Cidades>? cidades;
@@ -101,6 +90,9 @@ else
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
     private string mensagemErro = string.Empty;
+
+    private CidadesModal _modalCidade = default!;
+
 
     private IEnumerable<Cidades> CidadesFiltradas =>
         (cidades ?? [])
@@ -132,15 +124,14 @@ else
     private void AbrirCadastro()
     {
         mensagemErro = string.Empty;
-        cidadeDtoAtual = new CidadesDTO { Ativo = true };
-        tituloModal = "Nova cidade";
-        modalAberto = true;
+        _modalCidade.Abrir();
     }
+
 
     private void AbrirEdicao(Cidades cid)
     {
         mensagemErro = string.Empty;
-        cidadeDtoAtual = new CidadesDTO
+        _modalCidade.Abrir(new CidadesDTO
         {
             Id = cid.Id,
             Cidade = cid.Cidade,
@@ -151,9 +142,12 @@ else
             DataCriacao = cid.DataCriacao,
             DataUltimaAlteracao = cid.DataUltimaAlteracao,
             NomeUsuarioAlteracao = cid.NomeUsuarioAlteracao ?? "Sistema"
-        };
-        tituloModal = "Editar cidade";
-        modalAberto = true;
+        });
+    }
+
+    private async Task OnCidadeSalva(Cidades cidade)
+    {
+        await CarregarDados();
     }
 
     private async Task SalvarCidade()

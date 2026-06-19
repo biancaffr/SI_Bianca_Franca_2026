@@ -5,6 +5,7 @@
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Models.Pessoa
 @using SI_Bianca_Franca_2026.DTOs.Pessoa
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 @inject ClientesService ClientesService
 @inject PaisesService PaisesService
 @inject EstadosService EstadosService
@@ -87,40 +88,59 @@ else
 
             <div class="form-group" style="width: 565px;">
                 <label class="obrigatorio">País</label>
-                <InputSelect class="form-select" @bind-Value="dto.IdPais"
-                             @bind-Value:after="AoMudarPais">
-                    <option value="0">Selecione...</option>
-                    @foreach (var p in paises)
-                    {
-                        <option value="@p.Id.ToString()">@p.Pais</option>
-                    }
-                </InputSelect>
+                <div class="input-group">
+                    <InputSelect class="form-select" @bind-Value="dto.IdPais"
+                                 @bind-Value:after="AoMudarPais">
+                        <option value="0">Selecione...</option>
+                        @foreach (var p in paises)
+                        {
+                            <option value="@p.Id.ToString()">@p.Pais</option>
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Novo país" @onclick="() => _modalPais.Abrir()">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
                 <ValidationMessage For="@(() => dto.IdPais)" class="text-danger" />
             </div>
 
             <div class="form-group" style="width: 545px;">
                 <label>Estado</label>
-                <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
-                             @bind-Value:after="AoMudarEstado">
-                    <option value="0">Selecione...</option>
-                    @foreach (var e in estadosFiltrados)
-                    {
-                        <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
-                    }
-                </InputSelect>
+                <div class="input-group">
+                    <InputSelect class="form-select" @bind-Value="idEstadoSelecionado"
+                                 @bind-Value:after="AoMudarEstado">
+                        <option value="0">Selecione...</option>
+                        @foreach (var e in estadosFiltrados)
+                        {
+                            <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Novo estado"
+                            @onclick="() => _modalEstado.Abrir(idPaisPreSelecionado: dto.IdPais)">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="form-group" style="width: 545px;">
                 <label>Cidade</label>
-                <InputSelect class="form-select" @bind-Value="dto.IdCidade">
-                    <option value="0">Selecione...</option>
-                    @foreach (var c in cidadesFiltradas)
-                    {
-                        <option value="@c.Id.ToString()">@c.Cidade</option>
-                    }
-                </InputSelect>
+                <div class="input-group">
+                    <InputSelect class="form-select" @bind-Value="dto.IdCidade">
+                        <option value="0">Selecione...</option>
+                        @foreach (var c in cidadesFiltradas)
+                        {
+                            <option value="@c.Id.ToString()">@c.Cidade</option>
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Nova cidade"
+                            @onclick="() => _modalCidade.Abrir(idEstadoPreSelecionado: idEstadoSelecionado)">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
             </div>
-
             <div class="form-group" style="width: 135px;">
                 <label>Celular</label>
                 <InputText class="form-control" @bind-Value="dto.Telefone" maxlength="12" />
@@ -191,17 +211,26 @@ else
     </EditForm>
 }
 
+
+<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
+<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
+<CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalva" />
+
 @code {
     [Parameter] public int Id { get; set; }
 
     private ClientesDTO dto = new();
     private string mensagemErro = string.Empty;
     private bool carregando = true;
+    private int idEstadoSelecionado = 0;
 
     private List<Paises> paises = new();
     private List<Estados> estadosFiltrados = new();
     private List<Cidades> cidadesFiltradas = new();
-    private int idEstadoSelecionado = 0;
+
+    private PaisesModal _modalPais = default!;
+    private EstadosModal _modalEstado = default!;
+    private CidadesModal _modalCidade = default!;
 
     private string LimiteCreditoTexto
     {
@@ -256,22 +285,14 @@ else
             NomeUsuarioAlteracao = cliente.NomeUsuarioAlteracao
         };
 
-        if (cliente.IdPais > 0)
-            estadosFiltrados = await EstadosService.ListarPorPais(cliente.IdPais);
-
         if (cliente.IdCidade.HasValue)
         {
             var cidade = await CidadesService.Pesquisar(cliente.IdCidade.Value);
             if (cidade != null)
-            {
                 idEstadoSelecionado = cidade.IdEstado;
-                cidadesFiltradas = await CidadesService.ListarPorEstado(cidade.IdEstado);
-            }
         }
-
         carregando = false;
     }
-
     private async Task AoMudarPais()
     {
         idEstadoSelecionado = 0;
@@ -292,6 +313,40 @@ else
             cidadesFiltradas = await CidadesService.ListarPorEstado(idEstadoSelecionado);
         else
             cidadesFiltradas = new();
+    }
+
+    private async Task OnPaisSalvo(Paises pais)
+    {
+        var todos = await PaisesService.ListarTudo();
+        paises = todos.Where(p => p.Ativo).ToList();
+
+        var novo = paises.FirstOrDefault(p => p.Sigla == pais.Sigla);
+        if (novo != null)
+        {
+            dto.IdPais = novo.Id;
+            await AoMudarPais();
+        }
+    }
+
+    private async Task OnEstadoSalvo(Estados estado)
+    {
+        estadosFiltrados = await EstadosService.ListarPorPais(dto.IdPais);
+
+        var novo = estadosFiltrados.FirstOrDefault(e => e.Uf == estado.Uf);
+        if (novo != null)
+        {
+            idEstadoSelecionado = novo.Id;
+            await AoMudarEstado();
+        }
+    }
+
+    private async Task OnCidadeSalva(Cidades cidade)
+    {
+        cidadesFiltradas = await CidadesService.ListarPorEstado(idEstadoSelecionado);
+
+        var nova = cidadesFiltradas.FirstOrDefault(c => c.CodigoIbge == cidade.CodigoIbge);
+        if (nova != null)
+            dto.IdCidade = nova.Id;
     }
 
     private async Task Salvar()

@@ -3,7 +3,7 @@
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.DTOs.Localizacao
-@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 
 @inject EstadosService EstadosService
 @inject PaisesService PaisesService
@@ -72,33 +72,16 @@ else
     </table>
 }
 
-<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
-    @if (!string.IsNullOrEmpty(mensagemErro))
-    {
-        <div class="alert alert-danger mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
-        </div>
-    }
-    
-    <EstadosPage EstadoDto="estadoDtoAtual"
-                 ListaPaises="paisesAtivos"
-                 AoSalvar="SalvarEstado"
-                 AoCancelar="FecharModal" />
-</Modal>
+<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
 
 @code {
     private List<Estados>? estados;
-    private List<Paises> paisesAtivos = new();
 
-    private Estados estadoAtual = new();
-    private EstadosDTO estadoDtoAtual = new();
-
-    private bool modalAberto = false;
-    private string tituloModal = string.Empty;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
 
-    private string mensagemErro = string.Empty;
+
+    private EstadosModal _modalEstado = default!;
 
     private IEnumerable<Estados> EstadosFiltrados =>
         (estados ?? [])
@@ -123,67 +106,24 @@ else
         estados = await EstadosService.ListarTudo();
 
         var todosPaises = await PaisesService.ListarTudo();
-        paisesAtivos = todosPaises.Where(p => p.Ativo).ToList();
     }
 
-    private void AbrirCadastro()
+    private void AbrirCadastro() => _modalEstado.Abrir();
+
+    private void AbrirEdicao(Estados est) => _modalEstado.Abrir(new EstadosDTO
     {
-        mensagemErro = string.Empty;
-        estadoDtoAtual = new EstadosDTO { Ativo = true };
-        tituloModal = "Novo estado";
-        modalAberto = true;
-    }
+        Id = est.Id,
+        Estado = est.Estado,
+        Uf = est.Uf,
+        IdPais = est.IdPais,
+        Ativo = est.Ativo,
+        DataCriacao = est.DataCriacao,
+        DataUltimaAlteracao = est.DataUltimaAlteracao,
+        NomeUsuarioAlteracao = est.NomeUsuarioAlteracao ?? "Sistema"
+    });
 
-    private void AbrirEdicao(Estados est)
+    private async Task OnEstadoSalvo(Estados estado)
     {
-        mensagemErro = string.Empty;
-        estadoDtoAtual = new EstadosDTO
-        {
-            Id = est.Id,
-            Estado = est.Estado,
-            Uf = est.Uf,
-            IdPais = est.IdPais,
-            Ativo = est.Ativo,
-            DataCriacao = est.DataCriacao,
-            DataUltimaAlteracao = est.DataUltimaAlteracao,
-            NomeUsuarioAlteracao = est.NomeUsuarioAlteracao ?? "Sistema"
-        };
-        tituloModal = "Editar estado";
-        modalAberto = true;
-    }
-
-    private async Task SalvarEstado()
-    {
-        try
-        {
-            mensagemErro = string.Empty;
-
-            var estadoParaSalvar = new Estados
-                {
-                    Id = estadoDtoAtual.Id,
-                    Estado = estadoDtoAtual.Estado,
-                    Uf = estadoDtoAtual.Uf,
-                    IdPais = estadoDtoAtual.IdPais,
-                    Ativo = estadoDtoAtual.Ativo
-                };
-
-            if (estadoParaSalvar.Id == 0)
-                await EstadosService.Inserir(estadoParaSalvar);
-            else
-                await EstadosService.Atualizar(estadoParaSalvar);
-
-            await CarregarDados();
-            FecharModal();
-        }
-        catch (Exception ex)
-        {
-            mensagemErro = ex.Message;
-        }
-    }
-
-    private void FecharModal()
-    {
-        modalAberto = false;
-        estadoAtual = new();
+        await CarregarDados();
     }
 }

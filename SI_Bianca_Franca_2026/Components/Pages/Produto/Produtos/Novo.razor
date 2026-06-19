@@ -29,84 +29,67 @@
 <EditForm Model="dto" OnValidSubmit="Salvar">
     <DataAnnotationsValidator />
 
-    <div class="card mb-3">
-        <div class="card-header">Identificação</div>
-        <div class="card-body">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-
-                <div class="form-group col-full">
-                    <label class="obrigatorio">Tipo</label>
-                    <InputSelect class="form-control" @bind-Value="dto.Tipo">
-                        <option value="PRODUTO_FINAL">Produto Final</option>
-                        <option value="MATERIA_PRIMA">Matéria-Prima</option>
-                    </InputSelect>
-                </div>
-
-                <div class="form-group col-full">
-                    <label class="obrigatorio">Produto</label>
-                    <InputText class="form-control" @bind-Value="dto.Produto" maxlength="150"
-                               placeholder="Ex.: Agenda A5 Personalizada" />
-                    <ValidationMessage For="@(() => dto.Produto)" class="text-danger" />
-                </div>
-
-                <div class="form-group">
-                    <label class="obrigatorio">Categoria</label>
-                    <InputSelect class="form-control" @bind-Value="dto.IdCategoria">
-                        <option value="0">Selecione...</option>
-                        @foreach (var c in categorias)
-                        {
-                            <option value="@c.Id.ToString()">@c.Categoria</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => dto.IdCategoria)" class="text-danger" />
-                </div>
-
-                <div class="form-group">
-                    <label class="obrigatorio">Unidade de Medida</label>
-                    <InputSelect class="form-control" @bind-Value="dto.IdUnidadeMedida">
-                        <option value="0">Selecione...</option>
-                        @foreach (var u in unidades)
-                        {
-                            <option value="@u.Id.ToString()">@u.Sigla — @u.Descricao</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => dto.IdUnidadeMedida)" class="text-danger" />
-                </div>
-
-            </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <div class="form-group">
+            <label class="obrigatorio">Tipo</label>
+            <InputSelect class="form-select" @bind-Value="dto.Tipo">
+                <option value="PRODUTO_FINAL">Produto Final</option>
+                <option value="MATERIA_PRIMA">Matéria-Prima</option>
+            </InputSelect>
         </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header">Dados Fiscais</div>
-        <div class="card-body">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+        <div class="form-group col-full">
+            <label class="obrigatorio">Produto</label>
+            <InputText class="form-control" @bind-Value="dto.Produto" maxlength="150"
+                       placeholder="Ex.: Agenda A5 Personalizada" />
+            <ValidationMessage For="@(() => dto.Produto)" class="text-danger" />
+        </div>
 
-                <div class="form-group">
-                    <label>NCM</label>
-                    <InputText class="form-control" @bind-Value="dto.Ncm" maxlength="8"
-                               placeholder="00000000" />
-                    <ValidationMessage For="@(() => dto.Ncm)" class="text-danger" />
-                </div>
+        <div class="form-group">
+            <label class="obrigatorio">Categoria</label>
+            <InputSelect class="form-control" @bind-Value="dto.IdCategoria">
+                <option value="0">Selecione...</option>
+                @foreach (var c in categorias)
+                {
+                    <option value="@c.Id.ToString()">@c.Categoria</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => dto.IdCategoria)" class="text-danger" />
+        </div>
 
-                <div class="form-group">
-                    <label>CEST</label>
-                    <InputText class="form-control" @bind-Value="dto.Cest" maxlength="7"
-                               placeholder="0000000" />
-                    <ValidationMessage For="@(() => dto.Cest)" class="text-danger" />
-                </div>
+        <div class="form-group">
+            <label class="obrigatorio">Unidade de Medida</label>
+            <InputSelect class="form-control" @bind-Value="dto.IdUnidadeMedida">
+                <option value="0">Selecione...</option>
+                @foreach (var u in unidades)
+                {
+                    <option value="@u.Id.ToString()">@u.Sigla — @u.Descricao</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => dto.IdUnidadeMedida)" class="text-danger" />
+        </div>
+        <div class="form-group">
+            <label>NCM</label>
+            <InputText class="form-control" @bind-Value="dto.Ncm" maxlength="8"
+                       placeholder="00000000" />
+            <ValidationMessage For="@(() => dto.Ncm)" class="text-danger" />
+        </div>
 
-                <div class="form-group">
-                    <label>Origem</label>
-                    <InputSelect class="form-control" @bind-Value="dto.Origem">
-                        @foreach (var o in OrigensDisponiveis)
-                        {
-                            <option value="@o.Key">@o.Value</option>
-                        }
-                    </InputSelect>
-                </div>
+        <div class="form-group">
+            <label>CEST</label>
+            <InputText class="form-control" @bind-Value="dto.Cest" maxlength="7"
+                       placeholder="0000000" />
+            <ValidationMessage For="@(() => dto.Cest)" class="text-danger" />
+        </div>
 
-            </div>
+        <div class="form-group">
+            <label>Origem</label>
+            <InputSelect class="form-control" @bind-Value="dto.Origem">
+                @foreach (var o in OrigensDisponiveis)
+                {
+                    <option value="@o.Key">@o.Value</option>
+                }
+            </InputSelect>
         </div>
     </div>
 
@@ -191,7 +174,9 @@
 
     <div class="d-flex justify-content-end gap-2 mb-4">
         <button type="button" class="btn btn-secondary"
-                @onclick='() => Nav.NavigateTo("/produtos")'>Cancelar</button>
+                @onclick='() => Nav.NavigateTo("/produtos")'>
+            Cancelar
+        </button>
         <button type="submit" class="btn btn-primary">Salvar</button>
     </div>
 </EditForm>

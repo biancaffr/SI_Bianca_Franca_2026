@@ -3,7 +3,7 @@
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.DTOs.Localizacao
-@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 @inject PaisesService PaisesService
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -73,29 +73,18 @@ else
     </table>
 }
 
-<Modal Visivel="modalAberto" Titulo="@tituloModal" AoFechar="FecharModal">
-    @if (!string.IsNullOrEmpty(mensagemErro))
-    {
-        <div class="alert alert-danger mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensagemErro
-        </div>
-    }
-    <PaisesPage PaisDto="paisDtoAtual"
-                AoSalvar="SalvarPais"
-                AoCancelar="FecharModal" />
-</Modal>
+<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
 
 @code {
     private List<Paises>? paises;
-    private Paises paisAtual = new();
-    private PaisesDTO paisDtoAtual = new();
 
-    private bool modalAberto = false;
-    private string tituloModal = string.Empty;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
 
     private string mensagemErro = string.Empty;
+
+    private PaisesModal _modalPais = default!;
+
 
 
     private IEnumerable<Paises> PaisesFiltrados =>
@@ -122,66 +111,23 @@ else
         paises = await PaisesService.ListarTudo();
     }
 
-    private void AbrirCadastro()
+    private void AbrirCadastro() => _modalPais.Abrir();
+
+    private void AbrirEdicao(Paises pais) => _modalPais.Abrir(new PaisesDTO
     {
-        mensagemErro = string.Empty;
-        paisDtoAtual = new PaisesDTO { Ativo = true };
-        tituloModal = "Novo país";
-        modalAberto = true;
-    }
+        Id = pais.Id,
+        Pais = pais.Pais,
+        Sigla = pais.Sigla,
+        Ddi = pais.Ddi,
+        Moeda = pais.Moeda,
+        Ativo = pais.Ativo,
+        DataCriacao = pais.DataCriacao,
+        DataUltimaAlteracao = pais.DataUltimaAlteracao,
+        NomeUsuarioAlteracao = pais.NomeUsuarioAlteracao ?? "Sistema"
+    });
 
-    private void AbrirEdicao(Paises pais)
+    private async Task OnPaisSalvo(Paises pais)
     {
-        mensagemErro = string.Empty;
-        paisDtoAtual = new PaisesDTO
-        {
-            Id = pais.Id,
-            Pais = pais.Pais,
-            Sigla = pais.Sigla,
-            Ddi = pais.Ddi,
-            Moeda = pais.Moeda,
-            Ativo = pais.Ativo,
-            DataCriacao = pais.DataCriacao,
-            DataUltimaAlteracao = pais.DataUltimaAlteracao,
-            NomeUsuarioAlteracao = pais.NomeUsuarioAlteracao ?? "Sistema"
-        };
-        tituloModal = "Editar país";
-        modalAberto = true;
-    }
-
-    private async Task SalvarPais()
-    {
-        try
-        {
-            mensagemErro = string.Empty;
-        var paisParaSalvar = new Paises
-        {
-            Id = paisDtoAtual.Id,
-            Pais = paisDtoAtual.Pais,
-            Sigla = paisDtoAtual.Sigla,
-            Ddi = paisDtoAtual.Ddi,
-            Moeda = paisDtoAtual.Moeda,
-            Ativo = paisDtoAtual.Ativo
-        };
-
-        if (paisParaSalvar.Id == 0)
-            await PaisesService.Inserir(paisParaSalvar);
-        else
-            await PaisesService.Atualizar(paisParaSalvar);
-
         await CarregarPaises();
-        FecharModal();
     }
-        catch (Exception ex)
-        {
-            mensagemErro = ex.Message;
-        }
-    }
-
-    private void FecharModal()
-    {
-        modalAberto = false;
-        paisAtual = new();
-    }
-
 }

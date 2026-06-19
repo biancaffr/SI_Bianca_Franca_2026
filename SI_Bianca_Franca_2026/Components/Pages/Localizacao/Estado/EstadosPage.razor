@@ -26,14 +26,23 @@
     </div>
     <div class="form-group col-full">
         <label class="obrigatorio">País Pertencente</label>
-        <InputSelect class="form-control" @bind-Value="EstadoDto.IdPais">
-            <option value="0">Selecione...</option>
-            @foreach (var pais in ListaPaises)
+        <div class="input-group">
+            <InputSelect class="form-control" @bind-Value="EstadoDto.IdPais">
+                <option value="0">Selecione...</option>
+                @foreach (var pais in ListaPaises)
+                {
+                    <option value="@pais.Id.ToString()">@pais.Pais</option>
+                }
+            </InputSelect>
+            @if (AoNovoPais.HasDelegate)
             {
-                <option value="@pais.Id.ToString()">@pais.Pais</option>
-
+                <button type="button" class="btn btn-outline-secondary"
+                        title="Novo país"
+                        @onclick="() => AoNovoPais.InvokeAsync()">
+                    <i class="bi bi-plus"></i>
+                </button>
             }
-        </InputSelect>
+        </div>
         <ValidationMessage For="@(() => EstadoDto.IdPais)" class="text-danger" />
     </div>
 
@@ -83,6 +92,7 @@
 
     [Parameter] public EventCallback AoSalvar { get; set; }
     [Parameter] public EventCallback AoCancelar { get; set; }
+    [Parameter] public EventCallback AoNovoPais { get; set; }
 
     private async Task Salvar() => await AoSalvar.InvokeAsync();
 }

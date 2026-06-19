@@ -20,31 +20,44 @@
 
         <div class="form-group col-full">
             <label class="obrigatorio">Estado Pertencente</label>
-            <InputSelect class="form-control" @bind-Value="CidadeDto.IdEstado">
-                <option value="0">Selecione...</option>
-                @foreach (var est in ListaEstados)
+            <div class="input-group">
+                <InputSelect class="form-control" @bind-Value="CidadeDto.IdEstado">
+                    <option value="0">Selecione...</option>
+                    @foreach (var est in ListaEstados)
+                    {
+                        <option value="@est.Id.ToString()">@est.Estado (@est.Uf)</option>
+                    }
+                </InputSelect>
+                @if (AoNovoEstado.HasDelegate)
                 {
-                    <option value="@est.Id.ToString()">@est.Estado (@est.Uf)</option>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Novo estado"
+                            @onclick="() => AoNovoEstado.InvokeAsync()">
+                        <i class="bi bi-plus"></i>
+                    </button>
                 }
-            </InputSelect>
+            </div>
             <ValidationMessage For="@(() => CidadeDto.IdEstado)" class="text-danger" />
         </div>
 
         <div class="form-group col-full">
             <label class="obrigatorio">Cidade</label>
-            <InputText class="form-control" @bind-Value="CidadeDto.Cidade" maxlength="55" placeholder="Ex.: Foz do Iguaçu" />
+            <InputText class="form-control" @bind-Value="CidadeDto.Cidade" maxlength="55"
+                       placeholder="Ex.: Foz do Iguaçu" />
             <ValidationMessage For="@(() => CidadeDto.Cidade)" class="text-danger" />
         </div>
 
         <div class="form-group">
             <label class="obrigatorio">DDD</label>
-            <InputText class="form-control" @bind-Value="CidadeDto.Ddd" maxlength="2" placeholder="Ex.: 45" />
+            <InputText class="form-control" @bind-Value="CidadeDto.Ddd" maxlength="2"
+                       placeholder="Ex.: 45" />
             <ValidationMessage For="@(() => CidadeDto.Ddd)" class="text-danger" />
         </div>
 
         <div class="form-group">
             <label class="obrigatorio">Código IBGE</label>
-            <InputText class="form-control" @bind-Value="CidadeDto.CodigoIbge" maxlength="7" placeholder="Ex.: 4108304" />
+            <InputText class="form-control" @bind-Value="CidadeDto.CodigoIbge" maxlength="7"
+                       placeholder="Ex.: 4108304" />
             <ValidationMessage For="@(() => CidadeDto.CodigoIbge)" class="text-danger" />
         </div>
 
@@ -56,20 +69,21 @@
             </div>
         </div>
     </div>
+
     @if (CidadeDto.Id != 0)
     {
         <hr />
         <div class="form-grid auditoria">
             <div class="form-group">
                 <label>Data de criação</label>
-                <input class="form-control" disabled value="@CidadeDto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                <input class="form-control" disabled
+                       value="@CidadeDto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
             </div>
-
             <div class="form-group">
                 <label>Última alteração</label>
-                <input class="form-control" disabled value="@CidadeDto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                <input class="form-control" disabled
+                       value="@CidadeDto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
             </div>
-
             <div class="form-group col-full">
                 <label>Alterado por</label>
                 <input class="form-control" disabled value="@CidadeDto.NomeUsuarioAlteracao" />
@@ -78,7 +92,10 @@
     }
 
     <div class="form-actions">
-        <button type="button" class="btn btn-secondary" @onclick="() => AoCancelar.InvokeAsync()">Cancelar</button>
+        <button type="button" class="btn btn-secondary"
+                @onclick="() => AoCancelar.InvokeAsync()">
+            Cancelar
+        </button>
         <button type="submit" class="btn btn-primary">Salvar</button>
     </div>
 </EditForm>
@@ -88,6 +105,7 @@
     [Parameter, EditorRequired] public List<Estados> ListaEstados { get; set; } = new();
     [Parameter] public EventCallback AoSalvar { get; set; }
     [Parameter] public EventCallback AoCancelar { get; set; }
+    [Parameter] public EventCallback AoNovoEstado { get; set; }
 
     private async Task Salvar() => await AoSalvar.InvokeAsync();
 }
