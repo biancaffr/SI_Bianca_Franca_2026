@@ -1,0 +1,425 @@
+@using SI_Bianca_Franca_2026.DTOs.Pessoa
+@using SI_Bianca_Franca_2026.Models.Pessoa
+@using SI_Bianca_Franca_2026.Models.Localizacao
+@using SI_Bianca_Franca_2026.Services.Pessoa
+@using SI_Bianca_Franca_2026.Services.Localizacao
+@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
+@inject EmitentesService EmitentesService
+@inject PaisesService PaisesService
+@inject EstadosService EstadosService
+@inject CidadesService CidadesService
+
+<Modal Visivel="_aberto"
+       Titulo="@(_dto.Id == 0 ? "Novo Emitente" : "Editar Emitente")"
+       Largura="960px"
+       AoFechar="Fechar">
+
+    @if (!string.IsNullOrEmpty(_erro))
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @_erro
+        </div>
+    }
+
+    @if (_carregando)
+    {
+        <p>Carregando...</p>
+    }
+    else
+    {
+        <EditForm Model="_dto" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+
+                @if (_dto.Id != 0)
+                {
+                    <div class="form-group" style="width: 80px;">
+                        <label>Código</label>
+                        <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                    </div>
+                }
+
+                <div class="form-group" style="width: 165px;">
+                    <label class="obrigatorio">Tipo</label>
+                    <InputSelect class="form-select" @bind-Value="_dto.TipoPessoa">
+                        <option value="FISICA">Pessoa Física</option>
+                        <option value="JURIDICA">Pessoa Jurídica</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _dto.TipoPessoa)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 280px;">
+                    <label class="obrigatorio">Nome / Razão Social</label>
+                    <InputText class="form-control" @bind-Value="_dto.NomeRazaoSocial" maxlength="60" />
+                    <ValidationMessage For="@(() => _dto.NomeRazaoSocial)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>@(_dto.TipoPessoa == "FISICA" ? "Apelido" : "Nome Fantasia")</label>
+                    <InputText class="form-control" @bind-Value="_dto.ApelidoNomeFantasia" maxlength="40" />
+                </div>
+
+                <div class="form-group" style="width: 100%;"><hr class="my-1" /></div>
+
+                <div class="form-group" style="width: 120px;">
+                    <label>CEP</label>
+                    <InputText class="form-control" @bind-Value="_dto.Cep" maxlength="9" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Logradouro</label>
+                    <InputText class="form-control" @bind-Value="_dto.Logradouro" maxlength="50" />
+                </div>
+
+                <div class="form-group" style="width: 75px;">
+                    <label>Número</label>
+                    <InputText class="form-control" @bind-Value="_dto.Numero" maxlength="5" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Bairro</label>
+                    <InputText class="form-control" @bind-Value="_dto.Bairro" maxlength="50" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Complemento</label>
+                    <InputText class="form-control" @bind-Value="_dto.Complemento" maxlength="50" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label class="obrigatorio">País</label>
+                    <div class="input-group">
+                        <InputSelect class="form-select" @bind-Value="_dto.IdPais"
+                                     @bind-Value:after="AoMudarPais">
+                            <option value="0">Selecione...</option>
+                            @foreach (var p in _paises)
+                            {
+                                <option value="@p.Id.ToString()">@p.Pais</option>
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-outline-secondary"
+                                title="Novo país" @onclick="() => _modalPais.Abrir()">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <ValidationMessage For="@(() => _dto.IdPais)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Estado</label>
+                    <div class="input-group">
+                        <InputSelect class="form-select" @bind-Value="_idEstadoSelecionado"
+                                     @bind-Value:after="AoMudarEstado">
+                            <option value="0">Selecione...</option>
+                            @foreach (var e in _estadosFiltrados)
+                            {
+                                <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-outline-secondary"
+                                title="Novo estado"
+                                @onclick="() => _modalEstado.Abrir(idPaisPreSelecionado: _dto.IdPais)">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label>Cidade</label>
+                    <div class="input-group">
+                        <InputSelect class="form-select" @bind-Value="_dto.IdCidade">
+                            <option value="0">Selecione...</option>
+                            @foreach (var c in _cidadesFiltradas)
+                            {
+                                <option value="@c.Id.ToString()">@c.Cidade</option>
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-outline-secondary"
+                                title="Nova cidade"
+                                @onclick="() => _modalCidade.Abrir(idEstadoPreSelecionado: _idEstadoSelecionado)">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="width: 100%;"><hr class="my-1" /></div>
+
+                <div class="form-group" style="width: 135px;">
+                    <label>Celular</label>
+                    <InputText class="form-control" @bind-Value="_dto.Telefone" maxlength="12" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label>E-mail</label>
+                    <InputText class="form-control" @bind-Value="_dto.Email" maxlength="50" />
+                    <ValidationMessage For="@(() => _dto.Email)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="width: 150px;">
+                    <label class="@(EhBrasileiro ? "obrigatorio" : "")">
+                        @(_dto.TipoPessoa == "FISICA" ? "CPF" : "CNPJ")
+                    </label>
+                    <InputText class="form-control" @bind-Value="_dto.CpfCnpj" maxlength="14" />
+                    <ValidationMessage For="@(() => _dto.CpfCnpj)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="width: 150px;">
+                    <label>@(_dto.TipoPessoa == "FISICA" ? "RG" : "Inscrição Estadual")</label>
+                    <InputText class="form-control" @bind-Value="_dto.RgIe" maxlength="13" />
+                </div>
+
+                <div class="form-group" style="width: 150px;">
+                    <label>Inscrição Municipal</label>
+                    <InputText class="form-control" @bind-Value="_dto.InscricaoMunicipal" maxlength="20" />
+                </div>
+
+                <div class="form-group" style="width: 280px;">
+                    <label>Regime Tributário</label>
+                    <InputSelect class="form-control" @bind-Value="_dto.RegimeTributario">
+                        <option value="">Selecione...</option>
+                        @foreach (var r in RegimesTributarios)
+                        {
+                            <option value="@r.Key">@r.Value</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-group" style="width: 100px;">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card mb-3 mt-2">
+                <div class="card-header">Observações</div>
+                <div class="card-body">
+                    <InputTextArea class="form-control" @bind-Value="_dto.Observacao" rows="2" />
+                </div>
+            </div>
+
+            @if (_dto.Id != 0)
+            {
+                <hr />
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Data de Criação</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Última Alteração</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Alterado por</label>
+                        <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                    </div>
+                </div>
+            }
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+
+        </EditForm>
+    }
+</Modal>
+
+<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
+<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
+<CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalva" />
+
+@code {
+    [Parameter] public EventCallback<Emitentes> AoSalvarComSucesso { get; set; }
+
+    private bool _aberto = false;
+    private bool _carregando = false;
+    private string _erro = string.Empty;
+    private EmitentesDTO _dto = new();
+
+    private List<Paises> _paises = new();
+    private List<Estados> _estadosFiltrados = new();
+    private List<Cidades> _cidadesFiltradas = new();
+    private int _idEstadoSelecionado = 0;
+
+    private PaisesModal _modalPais = default!;
+    private EstadosModal _modalEstado = default!;
+    private CidadesModal _modalCidade = default!;
+
+    private static Dictionary<string, string> RegimesTributarios => new()
+    {
+        { "SIMPLES_NACIONAL",         "Simples Nacional" },
+        { "SIMPLES_NACIONAL_EXCESSO", "Simples Nacional — Excesso de sublimite" },
+        { "LUCRO_PRESUMIDO",          "Lucro Presumido" },
+        { "LUCRO_REAL",               "Lucro Real" },
+        { "MEI",                      "MEI" }
+    };
+
+    private bool EhBrasileiro => _paises
+        .FirstOrDefault(p => p.Id == _dto.IdPais)?.Sigla == "BRA";
+
+    public async Task AbrirNovo()
+    {
+        _erro = string.Empty;
+        _dto = new EmitentesDTO { Ativo = true };
+        _idEstadoSelecionado = 0;
+        _estadosFiltrados = new();
+        _cidadesFiltradas = new();
+        await CarregarPaises();
+        _aberto = true;
+        StateHasChanged();
+    }
+
+    public async Task AbrirEditar(int id)
+    {
+        _erro = string.Empty;
+        _carregando = true;
+        _aberto = true;
+        StateHasChanged();
+
+        await CarregarPaises();
+
+        var emitente = await EmitentesService.Pesquisar(id);
+        if (emitente is null) { _aberto = false; StateHasChanged(); return; }
+
+        _dto = new EmitentesDTO
+        {
+            Id = emitente.Id,
+            TipoPessoa = emitente.TipoPessoa,
+            NomeRazaoSocial = emitente.NomeRazaoSocial,
+            CpfCnpj = emitente.CpfCnpj,
+            RgIe = emitente.RgIe,
+            ApelidoNomeFantasia = emitente.ApelidoNomeFantasia,
+            IdPais = emitente.IdPais,
+            IdCidade = emitente.IdCidade,
+            Bairro = emitente.Bairro,
+            Logradouro = emitente.Logradouro,
+            Numero = emitente.Numero,
+            Complemento = emitente.Complemento,
+            Cep = emitente.Cep,
+            Telefone = emitente.Telefone,
+            Email = emitente.Email,
+            InscricaoMunicipal = emitente.InscricaoMunicipal,
+            RegimeTributario = emitente.RegimeTributario,
+            Observacao = emitente.Observacao,
+            Ativo = emitente.Ativo,
+            DataCriacao = emitente.DataCriacao,
+            DataUltimaAlteracao = emitente.DataUltimaAlteracao,
+            NomeUsuarioAlteracao = emitente.NomeUsuarioAlteracao
+        };
+
+        if (_dto.IdPais > 0)
+            _estadosFiltrados = await EstadosService.ListarPorPais(_dto.IdPais);
+
+        if (emitente.IdCidade.HasValue)
+        {
+            var cidade = await CidadesService.Pesquisar(emitente.IdCidade.Value);
+            if (cidade != null)
+            {
+                _idEstadoSelecionado = cidade.IdEstado;
+                _cidadesFiltradas = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
+            }
+        }
+
+        _carregando = false;
+        StateHasChanged();
+    }
+
+    private void Fechar() { _aberto = false; StateHasChanged(); }
+
+    private async Task CarregarPaises()
+    {
+        var todos = await PaisesService.ListarTudo();
+        _paises = todos.Where(p => p.Ativo).ToList();
+    }
+
+    private async Task AoMudarPais()
+    {
+        _idEstadoSelecionado = 0;
+        _dto.IdCidade = null;
+        _cidadesFiltradas = new();
+        _estadosFiltrados = _dto.IdPais > 0
+            ? await EstadosService.ListarPorPais(_dto.IdPais)
+            : new();
+    }
+
+    private async Task AoMudarEstado()
+    {
+        _dto.IdCidade = null;
+        _cidadesFiltradas = _idEstadoSelecionado > 0
+            ? await CidadesService.ListarPorEstado(_idEstadoSelecionado)
+            : new();
+    }
+
+    private async Task OnPaisSalvo(Paises pais)
+    {
+        await CarregarPaises();
+        var novo = _paises.FirstOrDefault(p => p.Sigla == pais.Sigla);
+        if (novo != null) { _dto.IdPais = novo.Id; await AoMudarPais(); }
+    }
+
+    private async Task OnEstadoSalvo(Estados estado)
+    {
+        _estadosFiltrados = await EstadosService.ListarPorPais(_dto.IdPais);
+        var novo = _estadosFiltrados.FirstOrDefault(e => e.Uf == estado.Uf);
+        if (novo != null) { _idEstadoSelecionado = novo.Id; await AoMudarEstado(); }
+    }
+
+    private async Task OnCidadeSalva(Cidades cidade)
+    {
+        _cidadesFiltradas = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
+        var nova = _cidadesFiltradas.FirstOrDefault(c => c.CodigoIbge == cidade.CodigoIbge);
+        if (nova != null) _dto.IdCidade = nova.Id;
+    }
+
+    private async Task Salvar()
+    {
+        try
+        {
+            _erro = string.Empty;
+            if (EhBrasileiro && string.IsNullOrWhiteSpace(_dto.CpfCnpj))
+            {
+                _erro = "CPF/CNPJ é obrigatório para emitentes do Brasil.";
+                return;
+            }
+            var emitente = MapearParaModel();
+            if (emitente.Id == 0) await EmitentesService.Inserir(emitente);
+            else await EmitentesService.Atualizar(emitente);
+            await AoSalvarComSucesso.InvokeAsync(emitente);
+            Fechar();
+        }
+        catch (Exception ex) { _erro = ex.Message; }
+    }
+
+    private Emitentes MapearParaModel() => new()
+    {
+        Id = _dto.Id,
+        TipoPessoa = _dto.TipoPessoa,
+        NomeRazaoSocial = _dto.NomeRazaoSocial,
+        CpfCnpj = _dto.CpfCnpj != null ? new string(_dto.CpfCnpj.Where(char.IsDigit).ToArray()) : null,
+        RgIe = _dto.RgIe,
+        ApelidoNomeFantasia = _dto.ApelidoNomeFantasia,
+        IdPais = _dto.IdPais,
+        IdCidade = _dto.IdCidade == 0 ? null : _dto.IdCidade,
+        Bairro = _dto.Bairro,
+        Logradouro = _dto.Logradouro,
+        Numero = _dto.Numero,
+        Complemento = _dto.Complemento,
+        Cep = _dto.Cep,
+        Telefone = _dto.Telefone,
+        Email = _dto.Email,
+        InscricaoMunicipal = _dto.InscricaoMunicipal,
+        RegimeTributario = _dto.RegimeTributario,
+        Observacao = _dto.Observacao,
+        Ativo = _dto.Ativo,
+        DataCriacao = _dto.DataCriacao
+    };
+}

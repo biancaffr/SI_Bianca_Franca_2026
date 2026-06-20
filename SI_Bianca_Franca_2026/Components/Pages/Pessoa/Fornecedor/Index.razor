@@ -1,9 +1,9 @@
-﻿@page "/fornecedores"
+@page "/fornecedores"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Services.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 @inject FornecedoresService FornecedoresService
-@inject NavigationManager Nav
 
 <div class="mb-3">
     <h3 class="mb-0">Fornecedores</h3>
@@ -17,7 +17,7 @@
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
     </select>
-    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/fornecedores/novo")'>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Novo Fornecedor
     </button>
 </div>
@@ -58,7 +58,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick='() => Nav.NavigateTo($"/fornecedores/editar/{f.Id}")'>
+                                @onclick="() => AbrirEdicao(f.Id)">
                             Editar
                         </button>
                     </td>
@@ -68,10 +68,14 @@ else
     </table>
 }
 
+<FornecedoresModal @ref="_modalFornecedor" AoSalvarComSucesso="OnFornecedorSalvo" />
+
 @code {
     private List<Fornecedores>? fornecedores;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
+
+    private FornecedoresModal _modalFornecedor = default!;
 
     private IEnumerable<Fornecedores> FornecedoresFiltrados =>
         (fornecedores ?? [])
@@ -88,6 +92,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarFornecedores();
+    }
+
+    private async Task CarregarFornecedores()
+    {
         fornecedores = await FornecedoresService.ListarTudo();
+    }
+
+    private async Task AbrirCadastro() => await _modalFornecedor.AbrirNovo();
+    private async Task AbrirEdicao(int id) => await _modalFornecedor.AbrirEditar(id);
+
+    private async Task OnFornecedorSalvo(Fornecedores f)
+    {
+        await CarregarFornecedores();
     }
 }

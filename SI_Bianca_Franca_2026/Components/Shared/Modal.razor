@@ -1,7 +1,7 @@
-﻿@if (Visivel)
+@if (Visivel)
 {
     <div class="modal-overlay" @onclick="Fechar">
-        <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-container" style="width: @Largura; max-width: 96vw;" @onclick:stopPropagation>
             <div class="modal-header">
                 <h5>@Titulo</h5>
                 <button class="btn-fechar" @onclick="Fechar">&times;</button>
@@ -18,6 +18,8 @@
     [Parameter] public string Titulo { get; set; } = string.Empty;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback AoFechar { get; set; }
+    /// <summary>Largura do modal. Ex.: "450px", "900px", "80vw". Padrão: 450px.</summary>
+    [Parameter] public string Largura { get; set; } = "450px";
 
     private async Task Fechar() => await AoFechar.InvokeAsync();
 }

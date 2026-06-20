@@ -1,8 +1,7 @@
-﻿@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
-@using SI_Bianca_Franca_2026.Components.Pages.Localizacao.Pais
 @inject PaisesService PaisesService
 
 <Modal Visivel="_aberto"
@@ -12,9 +11,81 @@
     {
         <div class="alert alert-danger">@_erro</div>
     }
-    <PaisesPage PaisDto="_dto"
-                AoSalvar="Salvar"
-                AoCancelar="Fechar" />
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 20px;">
+            <div class="form-group" style="width:80px;">
+                <label>Código</label>
+                @if (_dto.Id == 0)
+                {
+                    <input type="text" class="form-control" disabled placeholder="Novo" />
+                }
+                else
+                {
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                }
+            </div>
+            <div class="form-group" style="justify-self: end;">
+                <label>Status</label>
+                <div class="form-check form-switch mt-1">
+                    <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                    <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-full">
+            <label class="obrigatorio">País</label>
+            <InputText class="form-control" @bind-Value="_dto.Pais" maxlength="55" placeholder="Ex.: Brasil" />
+            <ValidationMessage For="@(() => _dto.Pais)" class="text-danger" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 92px 92px 92px 1fr; gap: 20px;">
+            <div class="form-group">
+                <label class="obrigatorio">Sigla</label>
+                <InputText class="form-control" @bind-Value="_dto.Sigla" maxlength="3" placeholder="Ex.: BRA" />
+                <ValidationMessage For="@(() => _dto.Sigla)" class="text-danger" />
+            </div>
+            <div class="form-group">
+                <label class="obrigatorio">DDI</label>
+                <InputText class="form-control" @bind-Value="_dto.Ddi" maxlength="4" placeholder="Ex.: +55" />
+                <ValidationMessage For="@(() => _dto.Ddi)" class="text-danger" />
+            </div>
+            <div class="form-group">
+                <label class="obrigatorio">Moeda</label>
+                <InputText class="form-control" @bind-Value="_dto.Moeda" maxlength="3" placeholder="Ex.: BRL" />
+                <ValidationMessage For="@(() => _dto.Moeda)" class="text-danger" />
+            </div>
+        </div>
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div class="form-grid-auditoria">
+                <div class="form-group">
+                    <label>Data de criação</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última alteração</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Alterado por</label>
+                    <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
 </Modal>
 
 @code {

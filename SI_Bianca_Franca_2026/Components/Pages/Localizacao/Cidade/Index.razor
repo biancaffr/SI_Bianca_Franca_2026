@@ -1,4 +1,4 @@
-﻿@page "/cidades"
+@page "/cidades"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
@@ -6,7 +6,6 @@
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 
 @inject CidadesService CidadesService
-@inject EstadosService EstadosService
 
 <div class="mb-3">
     <h3 class="mb-0">Cidades</h3>
@@ -80,19 +79,11 @@ else
 
 @code {
     private List<Cidades>? cidades;
-    private List<Estados> estadosAtivos = new();
 
-    private Cidades cidadeAtual = new();
-    private CidadesDTO cidadeDtoAtual = new();
-
-    private bool modalAberto = false;
-    private string tituloModal = string.Empty;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
-    private string mensagemErro = string.Empty;
 
     private CidadesModal _modalCidade = default!;
-
 
     private IEnumerable<Cidades> CidadesFiltradas =>
         (cidades ?? [])
@@ -116,73 +107,25 @@ else
     private async Task CarregarDados()
     {
         cidades = await CidadesService.ListarTudo();
-
-        var todosEstados = await EstadosService.ListarTudo();
-        estadosAtivos = todosEstados.Where(e => e.Ativo).ToList();
     }
 
-    private void AbrirCadastro()
+    private void AbrirCadastro() => _modalCidade.Abrir();
+
+    private void AbrirEdicao(Cidades cid) => _modalCidade.Abrir(new CidadesDTO
     {
-        mensagemErro = string.Empty;
-        _modalCidade.Abrir();
-    }
-
-
-    private void AbrirEdicao(Cidades cid)
-    {
-        mensagemErro = string.Empty;
-        _modalCidade.Abrir(new CidadesDTO
-        {
-            Id = cid.Id,
-            Cidade = cid.Cidade,
-            IdEstado = cid.IdEstado,
-            CodigoIbge = cid.CodigoIbge,
-            Ddd = cid.Ddd,
-            Ativo = cid.Ativo,
-            DataCriacao = cid.DataCriacao,
-            DataUltimaAlteracao = cid.DataUltimaAlteracao,
-            NomeUsuarioAlteracao = cid.NomeUsuarioAlteracao ?? "Sistema"
-        });
-    }
+        Id = cid.Id,
+        Cidade = cid.Cidade,
+        IdEstado = cid.IdEstado,
+        CodigoIbge = cid.CodigoIbge,
+        Ddd = cid.Ddd,
+        Ativo = cid.Ativo,
+        DataCriacao = cid.DataCriacao,
+        DataUltimaAlteracao = cid.DataUltimaAlteracao,
+        NomeUsuarioAlteracao = cid.NomeUsuarioAlteracao ?? "Sistema"
+    });
 
     private async Task OnCidadeSalva(Cidades cidade)
     {
         await CarregarDados();
-    }
-
-    private async Task SalvarCidade()
-    {
-        try
-        {
-            mensagemErro = string.Empty;
-
-            var cidadeParaSalvar = new Cidades
-            {
-                Id = cidadeDtoAtual.Id,
-                Cidade = cidadeDtoAtual.Cidade,
-                IdEstado = cidadeDtoAtual.IdEstado,
-                CodigoIbge = cidadeDtoAtual.CodigoIbge,
-                Ddd = cidadeDtoAtual.Ddd,
-                Ativo = cidadeDtoAtual.Ativo
-            };
-
-            if (cidadeParaSalvar.Id == 0)
-                await CidadesService.Inserir(cidadeParaSalvar);
-            else
-                await CidadesService.Atualizar(cidadeParaSalvar);
-
-            await CarregarDados();
-            FecharModal();
-        }
-        catch (Exception ex)
-        {
-            mensagemErro = ex.Message;
-        }
-    }
-
-    private void FecharModal()
-    {
-        modalAberto = false;
-        cidadeAtual = new();
     }
 }

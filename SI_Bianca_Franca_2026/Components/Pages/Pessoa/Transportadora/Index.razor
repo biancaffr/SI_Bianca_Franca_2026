@@ -1,9 +1,9 @@
-﻿@page "/transportadoras"
+@page "/transportadoras"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Services.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 @inject TransportadorasService TransportadorasService
-@inject NavigationManager Nav
 
 <div class="mb-3">
     <h3 class="mb-0">Transportadoras</h3>
@@ -17,7 +17,7 @@
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
     </select>
-    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/transportadoras/novo")'>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Nova Transportadora
     </button>
 </div>
@@ -60,7 +60,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick='() => Nav.NavigateTo($"/transportadoras/editar/{t.Id}")'>
+                                @onclick="() => AbrirEdicao(t.Id)">
                             Editar
                         </button>
                     </td>
@@ -70,10 +70,14 @@ else
     </table>
 }
 
+<TransportadorasModal @ref="_modalTransportadora" AoSalvarComSucesso="OnTransportadoraSalva" />
+
 @code {
     private List<Transportadoras>? transportadoras;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
+
+    private TransportadorasModal _modalTransportadora = default!;
 
     private IEnumerable<Transportadoras> TransportadorasFiltrados =>
         (transportadoras ?? [])
@@ -90,6 +94,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarTransportadoras();
+    }
+
+    private async Task CarregarTransportadoras()
+    {
         transportadoras = await TransportadorasService.ListarTudo();
+    }
+
+    private async Task AbrirCadastro() => await _modalTransportadora.AbrirNovo();
+    private async Task AbrirEdicao(int id) => await _modalTransportadora.AbrirEditar(id);
+
+    private async Task OnTransportadoraSalva(Transportadoras t)
+    {
+        await CarregarTransportadoras();
     }
 }

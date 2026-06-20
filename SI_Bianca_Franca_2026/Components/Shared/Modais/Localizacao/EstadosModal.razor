@@ -1,8 +1,7 @@
-﻿@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
-@using SI_Bianca_Franca_2026.Components.Pages.Localizacao.Estado
 @inject PaisesService PaisesService
 @inject EstadosService EstadosService
 
@@ -13,11 +12,86 @@
     {
         <div class="alert alert-danger">@_erro</div>
     }
-    <EstadosPage EstadoDto="_dto"
-                 ListaPaises="_paises"
-                 AoSalvar="Salvar"
-                 AoCancelar="Fechar"
-                 AoNovoPais="AbrirModalPais" />
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 20px;">
+            <div class="form-group" style="width: 100px;">
+                <label>Código</label>
+                @if (_dto.Id == 0)
+                {
+                    <input type="text" class="form-control" disabled placeholder="Novo" />
+                }
+                else
+                {
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                }
+            </div>
+            <div class="form-group" style="justify-self: end;">
+                <label>Status</label>
+                <div class="form-check form-switch mt-1">
+                    <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                    <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-full">
+            <label class="obrigatorio">País Pertencente</label>
+            <div class="input-group">
+                <InputSelect class="form-control" @bind-Value="_dto.IdPais">
+                    <option value="0">Selecione...</option>
+                    @foreach (var pais in _paises)
+                    {
+                        <option value="@pais.Id.ToString()">@pais.Pais</option>
+                    }
+                </InputSelect>
+                <button type="button" class="btn btn-outline-secondary"
+                        title="Novo país"
+                        @onclick="() => _modalPais.Abrir()">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+            <ValidationMessage For="@(() => _dto.IdPais)" class="text-danger" />
+        </div>
+
+        <div class="form-group col-full">
+            <label class="obrigatorio">Estado</label>
+            <InputText class="form-control" @bind-Value="_dto.Estado" maxlength="55" placeholder="Ex.: Paraná" />
+            <ValidationMessage For="@(() => _dto.Estado)" class="text-danger" />
+        </div>
+
+        <div class="form-group" style="width: 80px">
+            <label class="obrigatorio">UF</label>
+            <InputText class="form-control" @bind-Value="_dto.Uf" maxlength="2" placeholder="Ex.: PR" />
+            <ValidationMessage For="@(() => _dto.Uf)" class="text-danger" />
+        </div>
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div class="form-grid auditoria">
+                <div class="form-group">
+                    <label>Data de criação</label>
+                    <input class="form-control" disabled value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última alteração</label>
+                    <input class="form-control" disabled value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group col-full">
+                    <label>Alterado por</label>
+                    <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
 </Modal>
 
 <PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
@@ -52,8 +126,6 @@
         _aberto = false;
         StateHasChanged();
     }
-
-    private void AbrirModalPais() => _modalPais.Abrir();
 
     private async Task OnPaisSalvo(Paises pais)
     {

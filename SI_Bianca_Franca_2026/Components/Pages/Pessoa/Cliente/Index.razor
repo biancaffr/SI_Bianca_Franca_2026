@@ -1,10 +1,9 @@
-﻿@page "/clientes"
+@page "/clientes"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Services.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
-@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 @inject ClientesService ClientesService
-@inject NavigationManager Nav
 
 <div class="mb-3">
     <h3 class="mb-0">Clientes</h3>
@@ -20,7 +19,7 @@
         <option value="todos">Todos</option>
     </select>
 
-    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/clientes/novo")'>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Novo Cliente
     </button>
 </div>
@@ -65,7 +64,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick='() => Nav.NavigateTo($"/clientes/editar/{cli.Id}")'>
+                                @onclick="() => AbrirEdicao(cli.Id)">
                             Editar
                         </button>
                     </td>
@@ -75,10 +74,14 @@ else
     </table>
 }
 
+<ClientesModal @ref="_modalCliente" AoSalvarComSucesso="OnClienteSalvo" />
+
 @code {
     private List<Clientes>? clientes;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
+
+    private ClientesModal _modalCliente = default!;
 
     private IEnumerable<Clientes> ClientesFiltrados =>
         (clientes ?? [])
@@ -97,6 +100,20 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarClientes();
+    }
+
+    private async Task CarregarClientes()
+    {
         clientes = await ClientesService.ListarTudo();
+    }
+
+    private async Task AbrirCadastro() => await _modalCliente.AbrirNovo();
+
+    private async Task AbrirEdicao(int id) => await _modalCliente.AbrirEditar(id);
+
+    private async Task OnClienteSalvo(Clientes cliente)
+    {
+        await CarregarClientes();
     }
 }

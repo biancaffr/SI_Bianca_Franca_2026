@@ -1,8 +1,7 @@
-﻿@using SI_Bianca_Franca_2026.DTOs.Localizacao
+@using SI_Bianca_Franca_2026.DTOs.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
-@using SI_Bianca_Franca_2026.Components.Pages.Localizacao.Cidade
 @inject EstadosService EstadosService
 @inject CidadesService CidadesService
 
@@ -13,11 +12,98 @@
     {
         <div class="alert alert-danger">@_erro</div>
     }
-    <CidadesPage CidadeDto="_dto"
-                 ListaEstados="_estados"
-                 AoSalvar="Salvar"
-                 AoCancelar="Fechar"
-                 AoNovoEstado="AbrirModalEstado" />
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div class="form-grid">
+            <div class="form-group" style="width: 100px;">
+                <label>Código</label>
+                @if (_dto.Id == 0)
+                {
+                    <input type="text" class="form-control" disabled placeholder="Novo" />
+                }
+                else
+                {
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                }
+            </div>
+
+            <div class="form-group col-full">
+                <label class="obrigatorio">Estado Pertencente</label>
+                <div class="input-group">
+                    <InputSelect class="form-control" @bind-Value="_dto.IdEstado">
+                        <option value="0">Selecione...</option>
+                        @foreach (var est in _estados)
+                        {
+                            <option value="@est.Id.ToString()">@est.Estado (@est.Uf)</option>
+                        }
+                    </InputSelect>
+                    <button type="button" class="btn btn-outline-secondary"
+                            title="Novo estado"
+                            @onclick="AbrirModalEstado">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <ValidationMessage For="@(() => _dto.IdEstado)" class="text-danger" />
+            </div>
+
+            <div class="form-group col-full">
+                <label class="obrigatorio">Cidade</label>
+                <InputText class="form-control" @bind-Value="_dto.Cidade" maxlength="55"
+                           placeholder="Ex.: Foz do Iguaçu" />
+                <ValidationMessage For="@(() => _dto.Cidade)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label class="obrigatorio">DDD</label>
+                <InputText class="form-control" @bind-Value="_dto.Ddd" maxlength="2"
+                           placeholder="Ex.: 45" />
+                <ValidationMessage For="@(() => _dto.Ddd)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label class="obrigatorio">Código IBGE</label>
+                <InputText class="form-control" @bind-Value="_dto.CodigoIbge" maxlength="7"
+                           placeholder="Ex.: 4108304" />
+                <ValidationMessage For="@(() => _dto.CodigoIbge)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <div class="form-check form-switch mt-1">
+                    <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                    <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                </div>
+            </div>
+        </div>
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div class="form-grid auditoria">
+                <div class="form-group">
+                    <label>Data de criação</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última alteração</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group col-full">
+                    <label>Alterado por</label>
+                    <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
 </Modal>
 
 <EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
@@ -60,11 +146,9 @@
 
     private async Task OnEstadoSalvo(Estados estado)
     {
-        // recarrega a lista de estados
         var todos = await EstadosService.ListarTudo();
         _estados = todos.Where(e => e.Ativo).ToList();
 
-        // seleciona automaticamente o estado recém-criado
         var novo = _estados.FirstOrDefault(e => e.Uf == estado.Uf && e.IdPais == estado.IdPais);
         if (novo != null)
             _dto.IdEstado = novo.Id;

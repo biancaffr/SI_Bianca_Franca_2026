@@ -1,9 +1,9 @@
-﻿@page "/emitentes"
+@page "/emitentes"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Services.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 @inject EmitentesService EmitentesService
-@inject NavigationManager Nav
 
 <div class="mb-3">
     <h3 class="mb-0">Emitentes</h3>
@@ -17,7 +17,7 @@
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
     </select>
-    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/emitentes/novo")'>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Novo Emitente
     </button>
 </div>
@@ -60,7 +60,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick='() => Nav.NavigateTo($"/emitentes/editar/{e.Id}")'>
+                                @onclick="() => AbrirEdicao(e.Id)">
                             Editar
                         </button>
                     </td>
@@ -70,10 +70,14 @@ else
     </table>
 }
 
+<EmitentesModal @ref="_modalEmitente" AoSalvarComSucesso="OnEmitenteSalvo" />
+
 @code {
     private List<Emitentes>? emitentes;
     private string filtroStatus = "ativo";
     private string termoPesquisa = string.Empty;
+
+    private EmitentesModal _modalEmitente = default!;
 
     private IEnumerable<Emitentes> EmitentesFiltrados =>
         (emitentes ?? [])
@@ -90,6 +94,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarEmitentes();
+    }
+
+    private async Task CarregarEmitentes()
+    {
         emitentes = await EmitentesService.ListarTudo();
+    }
+
+    private async Task AbrirCadastro() => await _modalEmitente.AbrirNovo();
+    private async Task AbrirEdicao(int id) => await _modalEmitente.AbrirEditar(id);
+
+    private async Task OnEmitenteSalvo(Emitentes e)
+    {
+        await CarregarEmitentes();
     }
 }
