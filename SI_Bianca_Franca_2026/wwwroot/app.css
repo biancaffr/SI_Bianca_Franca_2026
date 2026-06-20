@@ -1,6 +1,10 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
+
 
 a, .btn-link {
     color: #006bb7;
@@ -110,7 +114,6 @@ h1:focus {
     font-weight: bold;
 }
 
-/* ── Home Page ──────────────────────────────────────────────── */
 .home-header {
     padding-top: 0.5rem;
 }
