@@ -1,7 +1,54 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Início</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-header mb-4">
+    <h2 class="home-title">Bem-vindo</h2>
+    <p class="home-subtitle text-muted">Selecione um módulo para começar</p>
+</div>
 
-Welcome to your new app.
+<div class="home-section">
+    <div class="home-section-header">
+        <i class="bi bi-globe2"></i>
+        <span>Localização</span>
+    </div>
+    <div class="home-cards">
+        <a href="paises" class="home-card">
+            <i class="bi bi-globe2 home-card-icon"></i>
+            <span class="home-card-label">Países</span>
+        </a>
+        <a href="estados" class="home-card">
+            <i class="bi bi-map home-card-icon"></i>
+            <span class="home-card-label">Estados</span>
+        </a>
+        <a href="cidades" class="home-card">
+            <i class="bi bi-geo-alt home-card-icon"></i>
+            <span class="home-card-label">Cidades</span>
+        </a>
+    </div>
+</div>
+
+<div class="home-section">
+    <div class="home-section-header">
+        <i class="bi bi-people"></i>
+        <span>Pessoas</span>
+    </div>
+    <div class="home-cards">
+        <a href="clientes" class="home-card">
+            <i class="bi bi-people home-card-icon"></i>
+            <span class="home-card-label">Clientes</span>
+        </a>
+        <a href="fornecedores" class="home-card">
+            <i class="bi bi-shop home-card-icon"></i>
+            <span class="home-card-label">Fornecedores</span>
+        </a>
+        <a href="emitentes" class="home-card">
+            <i class="bi bi-building home-card-icon"></i>
+            <span class="home-card-label">Emitentes</span>
+        </a>
+        <a href="transportadoras" class="home-card">
+            <i class="bi bi-truck home-card-icon"></i>
+            <span class="home-card-label">Transportadoras</span>
+        </a>
+    </div>
+</div>

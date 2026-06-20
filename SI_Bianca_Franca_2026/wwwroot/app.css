@@ -109,3 +109,81 @@ h1:focus {
     color: var(--bs-danger);
     font-weight: bold;
 }
+
+/* ── Home Page ──────────────────────────────────────────────── */
+.home-header {
+    padding-top: 0.5rem;
+}
+
+.home-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.home-subtitle {
+    font-size: 0.9rem;
+}
+
+.home-section {
+    margin-bottom: 2rem;
+}
+
+.home-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.home-section-header i {
+    font-size: 1.1rem;
+    color: #00204d;
+}
+
+.home-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.home-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 140px;
+    height: 100px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #374151;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+}
+
+.home-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 32, 77, 0.12);
+    border-color: #00204d;
+    color: #00204d;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.home-card-icon {
+    font-size: 1.6rem;
+    color: #00204d;
+}
+
+.home-card-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+}
