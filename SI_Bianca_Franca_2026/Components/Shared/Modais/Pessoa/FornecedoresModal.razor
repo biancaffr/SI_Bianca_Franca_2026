@@ -1,18 +1,14 @@
+@inherits PessoaModalBase<FornecedoresDTO>
 @using SI_Bianca_Franca_2026.DTOs.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
-@using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Services.Pessoa
-@using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
 @inject FornecedoresService FornecedoresService
-@inject PaisesService PaisesService
-@inject EstadosService EstadosService
-@inject CidadesService CidadesService
 
 <Modal Visivel="_aberto"
        Titulo="@(_dto.Id == 0 ? "Novo Fornecedor" : "Editar Fornecedor")"
-       Largura="960px"
+       Largura="1230px"
        AoFechar="Fechar">
 
     @if (!string.IsNullOrEmpty(_erro))
@@ -51,7 +47,7 @@
                 </div>
 
                 <div class="form-group" style="flex: 1; min-width: 280px;">
-                    <label class="obrigatorio">Nome / Razão Social</label>
+                    <label class="obrigatorio">Fornecedor</label>
                     <InputText class="form-control" @bind-Value="_dto.NomeRazaoSocial" maxlength="60" />
                     <ValidationMessage For="@(() => _dto.NomeRazaoSocial)" class="text-danger" />
                 </div>
@@ -68,7 +64,7 @@
                     <InputText class="form-control" @bind-Value="_dto.Cep" maxlength="9" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label>Logradouro</label>
                     <InputText class="form-control" @bind-Value="_dto.Logradouro" maxlength="50" />
                 </div>
@@ -78,21 +74,21 @@
                     <InputText class="form-control" @bind-Value="_dto.Numero" maxlength="5" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label>Bairro</label>
                     <InputText class="form-control" @bind-Value="_dto.Bairro" maxlength="50" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label>Complemento</label>
                     <InputText class="form-control" @bind-Value="_dto.Complemento" maxlength="50" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label class="obrigatorio">País</label>
                     <div class="input-group">
                         <InputSelect class="form-select" @bind-Value="_dto.IdPais"
-                                     @bind-Value:after="AoMudarPais">
+                                     @bind-Value:after="AoMudarPaisAsync">
                             <option value="0">Selecione...</option>
                             @foreach (var p in _paises)
                             {
@@ -100,18 +96,18 @@
                             }
                         </InputSelect>
                         <button type="button" class="btn btn-outline-secondary"
-                                title="Novo país" @onclick="() => _modalPais.Abrir()">
+                                title="Novo país" @onclick="AbrirModalNovoPais">
                             <i class="bi bi-plus"></i>
                         </button>
                     </div>
                     <ValidationMessage For="@(() => _dto.IdPais)" class="text-danger" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label>Estado</label>
                     <div class="input-group">
                         <InputSelect class="form-select" @bind-Value="_idEstadoSelecionado"
-                                     @bind-Value:after="AoMudarEstado">
+                                     @bind-Value:after="AoMudarEstadoAsync">
                             <option value="0">Selecione...</option>
                             @foreach (var e in _estadosFiltrados)
                             {
@@ -119,14 +115,13 @@
                             }
                         </InputSelect>
                         <button type="button" class="btn btn-outline-secondary"
-                                title="Novo estado"
-                                @onclick="() => _modalEstado.Abrir(idPaisPreSelecionado: _dto.IdPais)">
+                                title="Novo estado" @onclick="AbrirModalNovoEstado">
                             <i class="bi bi-plus"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 200px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label>Cidade</label>
                     <div class="input-group">
                         <InputSelect class="form-select" @bind-Value="_dto.IdCidade">
@@ -137,8 +132,7 @@
                             }
                         </InputSelect>
                         <button type="button" class="btn btn-outline-secondary"
-                                title="Nova cidade"
-                                @onclick="() => _modalCidade.Abrir(idEstadoPreSelecionado: _idEstadoSelecionado)">
+                                title="Nova cidade" @onclick="AbrirModalNovaCidade">
                             <i class="bi bi-plus"></i>
                         </button>
                     </div>
@@ -151,7 +145,7 @@
                     <InputText class="form-control" @bind-Value="_dto.Telefone" maxlength="12" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 220px;">
+                <div class="form-group" style="flex: 1; min-width: 475px;">
                     <label>E-mail</label>
                     <InputText class="form-control" @bind-Value="_dto.Email" maxlength="50" />
                     <ValidationMessage For="@(() => _dto.Email)" class="text-danger" />
@@ -217,9 +211,9 @@
     }
 </Modal>
 
-<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
-<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
-<CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalva" />
+<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvoAsync" />
+<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvoAsync" />
+<CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalvaAsync" />
 
 @code {
     [Parameter] public EventCallback<Fornecedores> AoSalvarComSucesso { get; set; }
@@ -227,19 +221,6 @@
     private bool _aberto = false;
     private bool _carregando = false;
     private string _erro = string.Empty;
-    private FornecedoresDTO _dto = new();
-
-    private List<Paises> _paises = new();
-    private List<Estados> _estadosFiltrados = new();
-    private List<Cidades> _cidadesFiltradas = new();
-    private int _idEstadoSelecionado = 0;
-
-    private PaisesModal _modalPais = default!;
-    private EstadosModal _modalEstado = default!;
-    private CidadesModal _modalCidade = default!;
-
-    private bool EhBrasileiro => _paises
-        .FirstOrDefault(p => p.Id == _dto.IdPais)?.Sigla == "BRA";
 
     public async Task AbrirNovo()
     {
@@ -248,7 +229,7 @@
         _idEstadoSelecionado = 0;
         _estadosFiltrados = new();
         _cidadesFiltradas = new();
-        await CarregarPaises();
+        await CarregarPaisesAsync();
         _aberto = true;
         StateHasChanged();
     }
@@ -260,7 +241,7 @@
         _aberto = true;
         StateHasChanged();
 
-        await CarregarPaises();
+        await CarregarPaisesAsync();
 
         var fornecedor = await FornecedoresService.Pesquisar(id);
         if (fornecedor is null) { _aberto = false; StateHasChanged(); return; }
@@ -289,69 +270,13 @@
             NomeUsuarioAlteracao = fornecedor.NomeUsuarioAlteracao
         };
 
-        if (_dto.IdPais > 0)
-            _estadosFiltrados = await EstadosService.ListarPorPais(_dto.IdPais);
-
-        if (fornecedor.IdCidade.HasValue)
-        {
-            var cidade = await CidadesService.Pesquisar(fornecedor.IdCidade.Value);
-            if (cidade != null)
-            {
-                _idEstadoSelecionado = cidade.IdEstado;
-                _cidadesFiltradas = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
-            }
-        }
+        await CarregarLocalizacaoDoRegistroAsync();
 
         _carregando = false;
         StateHasChanged();
     }
 
     private void Fechar() { _aberto = false; StateHasChanged(); }
-
-    private async Task CarregarPaises()
-    {
-        var todos = await PaisesService.ListarTudo();
-        _paises = todos.Where(p => p.Ativo).ToList();
-    }
-
-    private async Task AoMudarPais()
-    {
-        _idEstadoSelecionado = 0;
-        _dto.IdCidade = null;
-        _cidadesFiltradas = new();
-        _estadosFiltrados = _dto.IdPais > 0
-            ? await EstadosService.ListarPorPais(_dto.IdPais)
-            : new();
-    }
-
-    private async Task AoMudarEstado()
-    {
-        _dto.IdCidade = null;
-        _cidadesFiltradas = _idEstadoSelecionado > 0
-            ? await CidadesService.ListarPorEstado(_idEstadoSelecionado)
-            : new();
-    }
-
-    private async Task OnPaisSalvo(Paises pais)
-    {
-        await CarregarPaises();
-        var novo = _paises.FirstOrDefault(p => p.Sigla == pais.Sigla);
-        if (novo != null) { _dto.IdPais = novo.Id; await AoMudarPais(); }
-    }
-
-    private async Task OnEstadoSalvo(Estados estado)
-    {
-        _estadosFiltrados = await EstadosService.ListarPorPais(_dto.IdPais);
-        var novo = _estadosFiltrados.FirstOrDefault(e => e.Uf == estado.Uf);
-        if (novo != null) { _idEstadoSelecionado = novo.Id; await AoMudarEstado(); }
-    }
-
-    private async Task OnCidadeSalva(Cidades cidade)
-    {
-        _cidadesFiltradas = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
-        var nova = _cidadesFiltradas.FirstOrDefault(c => c.CodigoIbge == cidade.CodigoIbge);
-        if (nova != null) _dto.IdCidade = nova.Id;
-    }
 
     private async Task Salvar()
     {

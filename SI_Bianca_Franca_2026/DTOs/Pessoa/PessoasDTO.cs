@@ -36,17 +36,17 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
         [MaxLength(50)]
         public string? Complemento { get; set; }
 
-        [MaxLength(9)]
+        [MaxLength(8)]
         public string? Cep { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
         [Range(1, int.MaxValue, ErrorMessage = "Selecione um País válido")]
         public int IdPais { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(12)]
         public string? Telefone { get; set; }
 
-        [MaxLength(254)]
+        [MaxLength(50)]
         [EmailAddress(ErrorMessage = "E-mail inválido")]
         public string? Email { get; set; }
 

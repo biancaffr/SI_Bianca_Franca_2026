@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Shared\Modais\Pessoa\ClienteModal.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="MySql.Data" Version="9.7.0" />
   </ItemGroup>
