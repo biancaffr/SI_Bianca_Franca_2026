@@ -1,9 +1,6 @@
 @using SI_Bianca_Franca_2026.DTOs.Localizacao
 @using SI_Bianca_Franca_2026.Models.Localizacao
-@using SI_Bianca_Franca_2026.Services.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
-@inject EstadosService EstadosService
-@inject CidadesService CidadesService
 
 <Modal Visivel="_aberto"
        Titulo="@(_dto.Id == 0 ? "Nova Cidade" : "Editar Cidade")"
@@ -107,81 +104,3 @@
 </Modal>
 
 <EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
-
-@code {
-    [Parameter] public EventCallback<Cidades> AoSalvarComSucesso { get; set; }
-
-    private bool _aberto = false;
-    private string _erro = string.Empty;
-    private CidadesDTO _dto = new();
-    private List<Estados> _estados = new();
-    private EstadosModal _modalEstado = default!;
-
-    public async Task Abrir(CidadesDTO? dto = null, int idEstadoPreSelecionado = 0)
-    {
-        _erro = string.Empty;
-        _dto = dto ?? new CidadesDTO
-        {
-            Ativo = true,
-            IdEstado = idEstadoPreSelecionado
-        };
-
-        var todos = await EstadosService.ListarTudo();
-        _estados = todos.Where(e => e.Ativo).ToList();
-
-        _aberto = true;
-        StateHasChanged();
-    }
-
-    private void Fechar()
-    {
-        _aberto = false;
-        StateHasChanged();
-    }
-
-    private async Task AbrirModalEstado()
-    {
-        await _modalEstado.Abrir();
-    }
-
-    private async Task OnEstadoSalvo(Estados estado)
-    {
-        var todos = await EstadosService.ListarTudo();
-        _estados = todos.Where(e => e.Ativo).ToList();
-
-        var novo = _estados.FirstOrDefault(e => e.Uf == estado.Uf && e.IdPais == estado.IdPais);
-        if (novo != null)
-            _dto.IdEstado = novo.Id;
-
-        StateHasChanged();
-    }
-
-    private async Task Salvar()
-    {
-        try
-        {
-            _erro = string.Empty;
-            var cidade = new Cidades
-            {
-                Id = _dto.Id,
-                Cidade = _dto.Cidade,
-                IdEstado = _dto.IdEstado,
-                CodigoIbge = _dto.CodigoIbge,
-                Ddd = _dto.Ddd,
-                Ativo = _dto.Ativo
-            };
-
-            if (cidade.Id == 0)
-                await CidadesService.Inserir(cidade);
-            else
-                await CidadesService.Atualizar(cidade);
-
-            await AoSalvarComSucesso.InvokeAsync(cidade);
-            Fechar();
-        }
-        catch (Exception ex)
-        {
-            _erro = ex.Message;
-        }
-    }
-}

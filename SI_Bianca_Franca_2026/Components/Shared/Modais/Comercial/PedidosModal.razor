@@ -1,0 +1,290 @@
+﻿@using SI_Bianca_Franca_2026.DTOs.Comercial
+@using SI_Bianca_Franca_2026.Models.Comercial
+@using SI_Bianca_Franca_2026.Models.Pessoa
+@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Components.Shared
+
+<Modal Visivel="_aberto"
+       Titulo="@(_dto.Id == 0 ? "Novo Pedido" : "Editar Pedido")"
+       Largura="1400px"
+       AoFechar="Fechar">
+
+    @if (!string.IsNullOrEmpty(_erro))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@_erro
+        </div>
+    }
+
+    @if (_carregando)
+    {
+        <p>Carregando...</p>
+    }
+    else
+    {
+        <EditForm Model="_dto" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+
+                @if (_dto.Id != 0)
+                {
+                    <div class="form-group" style="width: 80px;">
+                        <label>Código</label>
+                        <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                    </div>
+                }
+
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label class="obrigatorio">Cliente</label>
+                    <InputSelect class="form-select" @bind-Value="_dto.IdCliente">
+                        <option value="0">Selecione...</option>
+                        @foreach (var c in _clientes)
+                        {
+                            <option value="@c.Id">@c.NomeRazaoSocial</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _dto.IdCliente)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="flex: 1; min-width: 220px;">
+                    <label class="obrigatorio">Emitente</label>
+                    <InputSelect class="form-select" @bind-Value="_dto.IdEmitente">
+                        <option value="0">Selecione...</option>
+                        @foreach (var e in _emitentes)
+                        {
+                            <option value="@e.Id">@e.NomeRazaoSocial</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _dto.IdEmitente)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="width: 180px;">
+                    <label class="obrigatorio">Status</label>
+                    <InputSelect class="form-select" @bind-Value="_dto.Status">
+                        @foreach (var s in StatusDisponiveis)
+                        {
+                            <option value="@s.Key">@s.Value</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-group" style="width: 160px;">
+                    <label class="obrigatorio">Data do Pedido</label>
+                    <InputDate class="form-control" @bind-Value="_dto.DataPedido" />
+                </div>
+
+                <div class="form-group" style="width: 160px;">
+                    <label>Previsão de Entrega</label>
+                    <InputDate class="form-control" @bind-Value="_dto.DataPrevisaoEntrega" />
+                </div>
+
+                <div class="form-group" style="width: 160px;">
+                    <label>Data de Entrega</label>
+                    <InputDate class="form-control" @bind-Value="_dto.DataEntrega" />
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Itens do Pedido</strong>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="AdicionarItem">
+                    <i class="bi bi-plus-lg me-1"></i>Adicionar Item
+                </button>
+            </div>
+
+            @if (!_itens.Any())
+            {
+                <p class="text-muted">Nenhum item adicionado ainda.</p>
+            }
+
+            @for (int i = 0; i < _itens.Count; i++)
+            {
+                var idx = i;
+                var item = _itens[idx];
+
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Item @(idx + 1)@(string.IsNullOrEmpty(item.NomeProduto) ? "" : $" — {item.NomeProduto}")</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoverItem(idx)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                            <div class="form-group" style="flex: 1; min-width: 220px;">
+                                <label class="obrigatorio">Produto Final</label>
+                                <select class="form-select" value="@item.IdProduto"
+                                        @onchange="e => AoTrocarProduto(item, e.Value?.ToString())">
+                                    <option value="0">Selecione...</option>
+                                    @foreach (var p in _produtosFinais)
+                                    {
+                                        <option value="@p.Id">@p.Produto</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="width: 100px;">
+                                <label>Quantidade</label>
+                                <input class="form-control" type="text"
+                                       value="@item.Quantidade.ToString("N2")"
+                                       @onchange="e => AtualizarQuantidadeItem(item, e.Value?.ToString())" />
+                            </div>
+
+                            <div class="form-group" style="width: 130px;">
+                                <label>Valor Unitário</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input class="form-control" type="text"
+                                           value="@item.ValorUnitario.ToString("N2")"
+                                           @onchange="e => AtualizarValorUnitario(item, e.Value?.ToString())" />
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="width: 130px;">
+                                <label>Desconto</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input class="form-control" type="text"
+                                           value="@item.ValorDesconto.ToString("N2")"
+                                           @onchange="e => AtualizarDesconto(item, e.Value?.ToString())" />
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="width: 130px;">
+                                <label>Total do Item</label>
+                                <input class="form-control" disabled value="@item.ValorTotal.ToString("C2")" />
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Personalização</label>
+                            <input class="form-control" @bind="item.DescricaoPersonalizacao"
+                                   placeholder="Ex.: Tema Galáxia, nome João na capa" />
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted fw-bold">Materiais</small>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => AdicionarMaterialManual(item)">
+                                <i class="bi bi-plus-lg me-1"></i>Adicionar Material
+                            </button>
+                        </div>
+
+                        @if (!item.Materiais.Any())
+                        {
+                            <p class="text-muted" style="font-size: 13px;">Nenhum material definido.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th style="width: 180px;">SKU</th>
+                                        <th style="width: 100px;">Qtd</th>
+                                        <th>Observação</th>
+                                        <th style="width: 40px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var material in item.Materiais)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (material.VeioDaFicha)
+                                                {
+                                                    @material.NomeProdutoMaterial
+                                                }
+                                                else
+                                                {
+                                                    <select class="form-select form-select-sm"
+                                                            value="@material.IdProdutoMaterial"
+                                                            @onchange="e => AoTrocarMaterialGenerico(material, e.Value?.ToString())">
+                                                        <option value="0">Selecione...</option>
+                                                        @foreach (var m in _materiaisPrimas)
+                                                        {
+                                                            <option value="@m.Id">@m.Produto</option>
+                                                        }
+                                                    </select>
+                                                }
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm"
+                                                        value="@material.Sku"
+                                                        @onchange="e => material.Sku = e.Value?.ToString() ?? string.Empty">
+                                                    <option value="">Selecione...</option>
+                                                    @foreach (var sku in ObterSkusDoMaterial(material.IdProdutoMaterial))
+                                                    {
+                                                        <option value="@sku.Sku">@sku.Sku</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm" type="text"
+                                                       value="@material.Quantidade.ToString("N2")"
+                                                       @onchange="e => AtualizarQuantidadeMaterial(material, e.Value?.ToString())" />
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm" @bind="material.Observacao" />
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => RemoverMaterial(item, material)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+
+            <hr />
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <div class="form-group" style="width: 200px;">
+                    <label>Valor Total do Pedido</label>
+                    <input class="form-control" disabled value="@ValorTotalPedido.ToString("C2")" />
+                </div>
+            </div>
+
+            <div class="card mb-3 mt-2">
+                <div class="card-header">Observações</div>
+                <div class="card-body">
+                    <InputTextArea class="form-control" @bind-Value="_dto.Observacao" rows="2" />
+                </div>
+            </div>
+
+            @if (_dto.Id != 0)
+            {
+                <hr />
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Data de Criação</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Última Alteração</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Alterado por</label>
+                        <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                    </div>
+                </div>
+            }
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </EditForm>
+    }
+</Modal>

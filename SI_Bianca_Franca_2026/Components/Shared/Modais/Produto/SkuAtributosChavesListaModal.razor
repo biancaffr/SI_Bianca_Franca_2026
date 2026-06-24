@@ -1,0 +1,65 @@
+﻿@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Components.Shared
+
+<Modal Visivel="_aberto" Titulo="Atributos de SKU" Largura="700px" AoFechar="Fechar">
+
+    <div class="d-flex gap-2 mb-3">
+        <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+               @bind="_termoPesquisa" @bind:event="oninput" />
+
+        <select class="w-auto" @bind="_filtroStatus">
+            <option value="ativo">Ativos</option>
+            <option value="inativo">Inativos</option>
+            <option value="todos">Todos</option>
+        </select>
+
+        <button class="btn btn-primary" @onclick="AbrirNovo">
+            <i class="bi bi-plus-lg me-1"></i>Novo Atributo
+        </button>
+    </div>
+
+    @if (_chaves is null)
+    {
+        <p>Carregando...</p>
+    }
+    else if (!ChavesFiltradas.Any())
+    {
+        <p>Nenhum atributo encontrado.</p>
+    }
+    else
+    {
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Atributo</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var chave in ChavesFiltradas)
+                {
+                    <tr>
+                        <td>@chave.Id</td>
+                        <td>@chave.Chave</td>
+                        <td>
+                            <span class="badge @(chave.Ativo ? "bg-success" : "bg-danger")">
+                                @(chave.Ativo ? "Ativo" : "Inativo")
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary"
+                                    @onclick="() => AbrirEdicao(chave.Id)">
+                                Editar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+</Modal>
+
+<SkuAtributosChavesModal @ref="_modalChave" AoSalvarComSucesso="OnChaveSalva" />

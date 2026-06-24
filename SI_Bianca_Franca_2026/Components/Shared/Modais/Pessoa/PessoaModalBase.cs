@@ -32,11 +32,15 @@ namespace SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
             _paises = todos.Where(p => p.Ativo).ToList();
         }
 
-        /// <summary>Carrega estado/cidade filtrados com base no _dto atual. Usar na edição.</summary>
         protected async Task CarregarLocalizacaoDoRegistroAsync()
         {
             if (_dto.IdPais > 0)
-                _estadosFiltrados = await EstadosService.ListarPorPais(_dto.IdPais);
+            {
+                var todos = await EstadosService.ListarPorPais(_dto.IdPais);
+                _estadosFiltrados = todos
+                    .Where(e => e.Ativo || e.Id == _idEstadoSelecionado)
+                    .ToList();
+            }
 
             if (_dto.IdCidade.HasValue)
             {
@@ -44,7 +48,16 @@ namespace SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
                 if (cidade != null)
                 {
                     _idEstadoSelecionado = cidade.IdEstado;
-                    _cidadesFiltradas = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
+
+                    var todosEstados = await EstadosService.ListarPorPais(_dto.IdPais);
+                    _estadosFiltrados = todosEstados
+                        .Where(e => e.Ativo || e.Id == _idEstadoSelecionado)
+                        .ToList();
+
+                    var todasCidades = await CidadesService.ListarPorEstado(_idEstadoSelecionado);
+                    _cidadesFiltradas = todasCidades
+                        .Where(c => c.Ativo || c.Id == _dto.IdCidade)
+                        .ToList();
                 }
             }
         }
@@ -76,7 +89,6 @@ namespace SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
             if (novo != null)
             {
                 _dto.IdPais = novo.Id;
-                await AoMudarPaisAsync();
             }
         }
 

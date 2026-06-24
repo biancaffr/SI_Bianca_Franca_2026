@@ -1,0 +1,139 @@
+﻿@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Services.Produto
+@inject SkusAtributosValoresService SkusAtributosValoresService
+
+<div style="display: grid; grid-template-columns: 220px 1fr 40px; gap: 12px; align-items: start; margin-bottom: 12px;">
+
+    <div>
+        <label class="text-muted" style="font-size: 13px;">Opção #@Indice</label>
+        <div class="input-group">
+            <select class="form-select" value="@Opcao.IdChave" @onchange="AoTrocarChave">
+                <option value="0">Selecione...</option>
+                @foreach (var chave in ChavesDisponiveis)
+                {
+                    <option value="@chave.Id">@chave.Chave</option>
+                }
+            </select>
+
+            <button type="button" class="btn btn-outline-secondary"
+                    title="Gerenciar atributos" @onclick="() => AoGerenciarChaves.InvokeAsync()">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <div>
+        <label class="text-muted" style="font-size: 13px;">Valores Selecionados</label>
+
+        @if (Opcao.IdChave == 0)
+        {
+            <div class="text-muted d-flex align-items-center" style="min-height: 38px; font-size: 13px;">
+                Selecione um atributo para listar os valores possíveis.
+            </div>
+        }
+        else if (!Opcao.ValoresDisponiveis.Any())
+        {
+            <div class="text-muted d-flex align-items-center" style="min-height: 38px; font-size: 13px;">
+                Nenhum valor cadastrado para este atributo. Edite-o para adicionar valores.
+            </div>
+        }
+        else
+        {
+            <div class="dropdown" @onclick:stopPropagation>
+                <div class="d-flex flex-wrap gap-1 align-items-center"
+                     style="border: 1px solid #ced4da; border-radius: 6px; padding: 6px; min-height: 38px; cursor: pointer;"
+                     @onclick="AlternarDropdown">
+                    @if (!Opcao.ValoresSelecionados.Any())
+                    {
+                        <span class="text-muted" style="font-size: 13px;">Selecione os valores...</span>
+                    }
+                    else
+                    {
+                        @foreach (var idValor in Opcao.ValoresSelecionados)
+                        {
+                            var valor = Opcao.ValoresDisponiveis.FirstOrDefault(v => v.IdValor == idValor).Valor;
+                            <span class="badge bg-light text-dark border d-flex align-items-center gap-1" style="font-size: 13px;">
+                                @valor
+                                <button type="button" class="btn-close" style="font-size: 9px;"
+                                        @onclick:stopPropagation
+                                        @onclick="() => RemoverValor(idValor)"></button>
+                            </span>
+                        }
+                    }
+                </div>
+
+                @if (_dropdownAberto)
+                {
+                    <div class="border rounded shadow-sm bg-white mt-1" style="position: absolute; z-index: 50; max-height: 200px; overflow-y: auto; min-width: 220px;">
+                        @foreach (var (idValor, valor) in Opcao.ValoresDisponiveis)
+                        {
+                            var selecionado = Opcao.ValoresSelecionados.Contains(idValor);
+                            <div class="d-flex align-items-center gap-2 px-2 py-1"
+                                 style="cursor: pointer;"
+                                 @onclick="() => AlternarValor(idValor)">
+                                <input type="checkbox" checked="@selecionado" />
+                                <span>@valor</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <button type="button" class="btn btn-sm btn-outline-danger align-self-end"
+            title="Remover opção" @onclick="() => AoRemover.InvokeAsync()">
+        <i class="bi bi-trash"></i>
+    </button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public OpcaoVariacao Opcao { get; set; } = default!;
+    [Parameter, EditorRequired] public List<SkuAtributosChaves> ChavesDisponiveis { get; set; } = new();
+    [Parameter] public int Indice { get; set; }
+    [Parameter] public EventCallback AoMudar { get; set; }
+    [Parameter] public EventCallback AoRemover { get; set; }
+    [Parameter] public EventCallback AoGerenciarChaves { get; set; }
+
+    private bool _dropdownAberto = false;
+
+    private async Task AoTrocarChave(ChangeEventArgs e)
+    {
+        var idChave = int.Parse(e.Value?.ToString() ?? "0");
+        Opcao.IdChave = idChave;
+        Opcao.NomeChave = ChavesDisponiveis.FirstOrDefault(c => c.Id == idChave)?.Chave ?? string.Empty;
+
+        var selecionadosAnteriores = Opcao.ValoresSelecionados;
+        Opcao.ValoresSelecionados = new();
+        Opcao.ValoresDisponiveis = new();
+
+        if (idChave > 0)
+        {
+            var valores = await SkusAtributosValoresService.ListarPorChave(idChave);
+            Opcao.ValoresDisponiveis = valores
+                .Where(v => v.Ativo || selecionadosAnteriores.Contains(v.Id))
+                .Select(v => (v.Id, v.Valor))
+                .ToList();
+        }
+
+        await AoMudar.InvokeAsync();
+    }
+
+    private void AlternarDropdown() => _dropdownAberto = !_dropdownAberto;
+
+    private async Task AlternarValor(int idValor)
+    {
+        if (Opcao.ValoresSelecionados.Contains(idValor))
+            Opcao.ValoresSelecionados.Remove(idValor);
+        else
+            Opcao.ValoresSelecionados.Add(idValor);
+
+        await AoMudar.InvokeAsync();
+    }
+
+    private async Task RemoverValor(int idValor)
+    {
+        Opcao.ValoresSelecionados.Remove(idValor);
+        await AoMudar.InvokeAsync();
+    }
+}

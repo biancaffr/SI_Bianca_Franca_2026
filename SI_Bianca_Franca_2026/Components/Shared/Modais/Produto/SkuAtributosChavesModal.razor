@@ -1,0 +1,105 @@
+﻿@using SI_Bianca_Franca_2026.DTOs.Produto
+@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Components.Shared
+
+<Modal Visivel="_aberto"
+       Titulo="@(_dto.Id == 0 ? "Novo Atributo" : "Editar Atributo")"
+       AoFechar="Fechar">
+
+    @if (!string.IsNullOrEmpty(_erro))
+    {
+        <div class="alert alert-danger">@_erro</div>
+    }
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 20px;">
+            <div class="form-group">
+                <label>Código</label>
+                @if (_dto.Id == 0)
+                {
+                    <input class="form-control" disabled placeholder="Novo" />
+                }
+                else
+                {
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="obrigatorio">Atributo</label>
+                <InputText class="form-control" @bind-Value="_dto.Chave" maxlength="20"
+                           placeholder="Ex.: Cor, Gramatura, Tamanho" />
+                <ValidationMessage For="@(() => _dto.Chave)" class="text-danger" />
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <label>Valores Possíveis</label>
+            <div class="d-flex gap-2 mb-2">
+                <input type="text" class="form-control"
+                       placeholder="Adicionar valor... (ex: Bivolt, Azul, G)"
+                       @bind="_novoValorTexto"
+                       @bind:event="oninput"
+                       @onkeydown="AoTeclarNovoValor" />
+                <button type="button" class="btn btn-outline-secondary"
+                        @onclick="AdicionarValor">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+
+            @if (!_dto.ValoresPossiveis.Any())
+            {
+                <p class="text-muted" style="font-size: 13px;">Nenhum valor cadastrado ainda.</p>
+            }
+            else
+            {
+                <div class="d-flex flex-wrap gap-2 p-2" style="border: 1px solid #e9ecef; border-radius: 6px;">
+                    @foreach (var valor in _dto.ValoresPossiveis)
+                    {
+                        <span class="badge @(valor.Ativo ? "bg-light text-dark border" : "bg-secondary text-white")"
+                              style="font-size: 13px; cursor: pointer;"
+                              @onclick="() => AlternarStatusValor(valor)"
+                              title="@(valor.Ativo ? "Clique para desativar" : "Clique para reativar")">
+                            @valor.Valor.ToUpper()
+                            @if (!valor.Ativo)
+                            {
+                                <span> (inativo)</span>
+                            }
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Data de criação</label>
+                    <input class="form-control" disabled value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última alteração</label>
+                    <input class="form-control" disabled value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="form-actions mt-3">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
+</Modal>
