@@ -21,14 +21,14 @@ namespace SI_Bianca_Franca_2026.Services.Produto
         public async Task<SkuAtributosChaves?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
-        public async Task Inserir(SkuAtributosChaves entity)
+        public async Task<int> Inserir(SkuAtributosChaves entity)
         {
             bool chaveExiste = await _repository.ExisteChaveCadastradaAsync(entity.Chave);
             if (chaveExiste)
                 throw new Exception("Já existe um atributo cadastrado com esta chave.");
 
             PreencherInsercao(entity);
-            await _repository.InserirAsync(entity);
+            return await _repository.InserirAsync(entity);
         }
 
         public async Task Atualizar(SkuAtributosChaves entity)

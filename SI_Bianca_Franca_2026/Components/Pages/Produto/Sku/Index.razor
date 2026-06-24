@@ -1,0 +1,73 @@
+﻿@page "/skus"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Models.Produto
+
+<div class="mb-3">
+    <h3 class="mb-0">SKUs</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar código ou produto..."
+           @bind="_termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="_filtroProduto">
+        <option value="0">Todos os produtos</option>
+        @foreach (var p in _produtos)
+        {
+            <option value="@p.Id">@p.Produto</option>
+        }
+    </select>
+
+    <select class="w-auto" @bind="_filtroStatus">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+</div>
+
+@if (_skus is null)
+{
+    <p>Carregando...</p>
+}
+else if (!SkusFiltrados.Any())
+{
+    <p>Nenhum SKU encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Produto</th>
+                <th>Variação</th>
+                <th>GTIN/EAN</th>
+                <th>Preço Custo</th>
+                <th>Estoque</th>
+                <th>Est. Mínimo</th>
+                <th>Unid.</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in SkusFiltrados)
+            {
+                <tr>
+                    <td>@s.Sku</td>
+                    <td>@(s.OProduto?.Produto ?? "—")</td>
+                    <td>@string.Join(" / ", s.Atributos.Select(a => a.OValor?.Valor ?? ""))</td>
+                    <td>@(s.GtinEan ?? "—")</td>
+                    <td>@(s.PrecoCusto?.ToString("C2") ?? "—")</td>
+                    <td>@s.Estoque.ToString("N2")</td>
+                    <td>@s.EstoqueMinimo.ToString("N2")</td>
+                    <td>@(s.OProduto?.OUnidadeMedida?.Sigla ?? "—")</td>
+                    <td>
+                        <span class="badge @(s.Ativo ? "bg-success" : "bg-danger")">
+                            @(s.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

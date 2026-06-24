@@ -17,6 +17,6 @@ namespace SI_Bianca_Franca_2026.Models.Produto
         public string NomeUsuarioAlteracao { get; set; } = string.Empty;
 
         public Produtos? OProduto { get; set; }
-        public List<SkusAtributosValores> Atributos { get; set; } = new();
+        public List<SkusAtributosValoresRelacionamento> Atributos { get; set; } = new();
     }
 }

@@ -39,16 +39,17 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             return await conexao.QueryFirstOrDefaultAsync<SkuAtributosChaves>(SqlPesquisar, new { Id = id });
         }
 
-        public async Task InserirAsync(SkuAtributosChaves entity)
+        public async Task<int> InserirAsync(SkuAtributosChaves entity)
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO sku_atributos_chaves
-                           (chave, data_criacao, data_ultima_alteracao,
-                            id_usuario_ultima_alteracao, ativo)
-                           VALUES
-                           (@Chave, @DataCriacao, @DataUltimaAlteracao,
-                            @IdUsuarioUltimaAlteracao, @Ativo)";
-            await conexao.ExecuteAsync(sql, entity);
+                   (chave, data_criacao, data_ultima_alteracao,
+                    id_usuario_ultima_alteracao, ativo)
+                   VALUES
+                   (@Chave, @DataCriacao, @DataUltimaAlteracao,
+                    @IdUsuarioUltimaAlteracao, @Ativo);
+                   SELECT LAST_INSERT_ID();";
+            return await conexao.ExecuteScalarAsync<int>(sql, entity);
         }
 
         public async Task AtualizarAsync(SkuAtributosChaves entity)

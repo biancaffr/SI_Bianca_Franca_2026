@@ -7,12 +7,24 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        [MaxLength(100, ErrorMessage = "Máximo de 100 caracteres")]
+        [MaxLength(20, ErrorMessage = "Máximo de 20 caracteres")]
         public string Chave { get; set; } = string.Empty;
 
         public bool Ativo { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime DataUltimaAlteracao { get; set; }
         public string NomeUsuarioAlteracao { get; set; } = string.Empty;
+
+        public List<ValorPossivelDTO> ValoresPossiveis { get; set; } = new();
+    }
+
+    public class ValorPossivelDTO
+    {
+        public int Id { get; set; }
+        [Required(ErrorMessage = "Campo obrigatório")]
+        [MaxLength(150, ErrorMessage = "Máximo de 150 caracteres")]
+        public string Valor { get; set; } = string.Empty;
+        public bool Ativo { get; set; } = true; 
+
     }
 }

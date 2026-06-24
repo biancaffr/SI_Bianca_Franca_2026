@@ -21,7 +21,7 @@ namespace SI_Bianca_Franca_2026.Services.Produto
         public async Task<Skus?> Pesquisar(string sku)
             => await _repository.PesquisarAsync(sku);
 
-        public async Task Inserir(Skus entity, List<SkusAtributosValores> atributos)
+        public async Task Inserir(Skus entity, List<SkusAtributosValoresRelacionamento> atributos)
         {
             bool skuExiste = await _repository.ExisteSkuCadastradoAsync(entity.Sku);
             if (skuExiste)
@@ -48,7 +48,10 @@ namespace SI_Bianca_Franca_2026.Services.Produto
             }
         }
 
-        public async Task Atualizar(Skus entity, List<SkusAtributosValores> atributos)
+        public async Task<List<Skus>> ListarTudoComProduto()
+            => await _repository.ListarTudoComProdutoAsync();
+
+        public async Task Atualizar(Skus entity, List<SkusAtributosValoresRelacionamento> atributos)
         {
             if (!string.IsNullOrWhiteSpace(entity.GtinEan))
             {

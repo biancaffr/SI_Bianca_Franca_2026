@@ -1,10 +1,7 @@
-﻿@page "/produtos"
+@page "/produtos"
 @rendermode InteractiveServer
-@using SI_Bianca_Franca_2026.Services.Produto
 @using SI_Bianca_Franca_2026.Models.Produto
-@using SI_Bianca_Franca_2026.Components.Shared
-@inject ProdutosService ProdutosService
-@inject NavigationManager Nav
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto
 
 <div class="mb-3">
     <h3 class="mb-0">Produtos</h3>
@@ -26,7 +23,7 @@
         <option value="todos">Todos</option>
     </select>
 
-    <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/produtos/novo")'>
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Novo Produto
     </button>
 </div>
@@ -73,7 +70,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick='() => Nav.NavigateTo($"/produtos/editar/{p.Id}")'>
+                                @onclick="() => AbrirEdicao(p.Id)">
                             Editar
                         </button>
                     </td>
@@ -83,27 +80,4 @@ else
     </table>
 }
 
-@code {
-    private List<Produtos>? produtos;
-    private string filtroStatus = "ativo";
-    private string filtroTipo = "todos";
-    private string termoPesquisa = string.Empty;
-
-    private IEnumerable<Produtos> ProdutosFiltrados =>
-        (produtos ?? [])
-        .Where(p => filtroStatus switch
-        {
-            "ativo" => p.Ativo,
-            "inativo" => !p.Ativo,
-            _ => true
-        })
-        .Where(p => filtroTipo == "todos" || p.Tipo == filtroTipo)
-        .Where(p => string.IsNullOrWhiteSpace(termoPesquisa) ||
-                    p.Produto.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    (p.OCategoria != null && p.OCategoria.Categoria.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
-
-    protected override async Task OnInitializedAsync()
-    {
-        produtos = await ProdutosService.ListarTudo();
-    }
-}
+<ProdutosModal @ref="_modalProduto" AoSalvarComSucesso="OnProdutoSalvo" />

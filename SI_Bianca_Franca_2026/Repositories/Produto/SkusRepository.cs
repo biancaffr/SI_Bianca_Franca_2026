@@ -31,11 +31,52 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
 
         private static string SqlPesquisar => SqlBase + " WHERE s.sku = @Sku";
         private static string SqlPorProduto => SqlBase + " WHERE s.id_produto = @IdProduto";
+        private static string SqlBaseComProduto => @"
+            SELECT
+                s.sku,
+                s.id_produto            AS IdProduto,
+                s.gtin_ean              AS GtinEan,
+                s.preco_custo           AS PrecoCusto,
+                s.estoque,
+                s.estoque_minimo        AS EstoqueMinimo,
+                s.data_criacao          AS DataCriacao,
+                s.data_ultima_alteracao AS DataUltimaAlteracao,
+                s.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
+                s.ativo,
+                u.nome                  AS NomeUsuarioAlteracao,
+                p.id                    AS ProdutoId,
+                p.produto,
+                um.sigla
+            FROM skus s
+            LEFT JOIN usuarios u           ON s.id_usuario_ultima_alteracao = u.id
+            INNER JOIN produtos p          ON s.id_produto = p.id
+            INNER JOIN unidades_medida um  ON p.id_unidade_medida = um.id";
 
         public async Task<List<Skus>> ListarTudoAsync()
         {
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<Skus>(SqlBase)).ToList();
+        }
+
+        public async Task<List<Skus>> ListarTudoComProdutoAsync()
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            var resultado = await conexao.QueryAsync<Skus, Produtos, UnidadesMedida, Skus>(
+                SqlBaseComProduto,
+                (sku, produto, unidade) =>
+                {
+                    produto.OUnidadeMedida = unidade;
+                    sku.OProduto = produto;
+                    return sku;
+                },
+                splitOn: "ProdutoId,sigla"
+            );
+
+            var skusList = resultado.ToList();
+            foreach (var sku in skusList)
+                sku.Atributos = await ListarAtributosAsync(sku.Sku);
+
+            return skusList;
         }
 
         public async Task<List<Skus>> ListarPorProdutoAsync(int idProduto)
@@ -60,27 +101,31 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             return resultado;
         }
 
-        public async Task<List<SkusAtributosValores>> ListarAtributosAsync(string sku)
+        public async Task<List<SkusAtributosValoresRelacionamento>> ListarAtributosAsync(string sku)
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"SELECT
-                           av.sku,
-                           av.id_chave     AS IdChave,
-                           av.valor,
+                           r.sku,
+                           r.id_valor      AS IdValor,
+                           v.id,
+                           v.id_chave      AS IdChave,
+                           v.valor,
                            ch.id,
                            ch.chave
-                           FROM skus_atributos_valores av
-                           INNER JOIN sku_atributos_chaves ch ON av.id_chave = ch.id
-                           WHERE av.sku = @Sku";
+                           FROM skus_atributos_valores_relacionamento r
+                           INNER JOIN sku_atributos_valores v ON r.id_valor = v.id
+                           INNER JOIN sku_atributos_chaves ch ON v.id_chave = ch.id
+                           WHERE r.sku = @Sku";
 
-            var resultado = await conexao.QueryAsync<SkusAtributosValores, SkuAtributosChaves, SkusAtributosValores>(
+            var resultado = await conexao.QueryAsync<SkusAtributosValoresRelacionamento, SkusAtributosValores, SkuAtributosChaves, SkusAtributosValoresRelacionamento>(
                 sql,
-                (atributo, chave) =>
+                (relacionamento, valor, chave) =>
                 {
-                    atributo.OChave = chave;
-                    return atributo;
+                    valor.OChave = chave;
+                    relacionamento.OValor = valor;
+                    return relacionamento;
                 },
-                splitOn: "id",
+                splitOn: "id,id",
                 param: new { Sku = sku }
             );
             return resultado.ToList();
@@ -98,11 +143,11 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             await conexao.ExecuteAsync(sql, entity);
         }
 
-        public async Task InserirAtributosAsync(string sku, List<SkusAtributosValores> atributos)
+        public async Task InserirAtributosAsync(string sku, List<SkusAtributosValoresRelacionamento> atributos)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"INSERT INTO skus_atributos_valores (sku, id_chave, valor)
-                           VALUES (@Sku, @IdChave, @Valor)";
+            string sql = @"INSERT INTO skus_atributos_valores_relacionamento (sku, id_valor)
+                           VALUES (@Sku, @IdValor)";
             await conexao.ExecuteAsync(sql, atributos);
         }
 
@@ -125,7 +170,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             await conexao.ExecuteAsync(
-                "DELETE FROM skus_atributos_valores WHERE sku = @Sku", new { Sku = sku });
+                "DELETE FROM skus_atributos_valores_relacionamento WHERE sku = @Sku", new { Sku = sku });
         }
 
         public async Task AlterarStatusAsync(string sku, bool novoStatus, int idUsuario)
@@ -149,7 +194,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             await conexao.ExecuteAsync(
-                "DELETE FROM skus_atributos_valores WHERE sku = @Sku", new { Sku = sku });
+                "DELETE FROM skus_atributos_valores_relacionamento WHERE sku = @Sku", new { Sku = sku });
             await conexao.ExecuteAsync(
                 "DELETE FROM skus WHERE sku = @Sku", new { Sku = sku });
         }

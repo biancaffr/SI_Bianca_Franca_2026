@@ -1,0 +1,92 @@
+﻿@page "/pedidos"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Models.Comercial
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Comercial
+
+<div class="mb-3">
+    <h3 class="mb-0">Pedidos</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="_termoPesquisa" @bind:event="oninput" />
+
+    <select class="w-auto" @bind="_filtroStatus">
+        <option value="todos">Todos os status</option>
+        <option value="AGUARDANDO_APROVACAO_ARTE">Aguardando Aprovação de Arte</option>
+        <option value="ARTE_APROVADA">Arte Aprovada</option>
+        <option value="EM_PRODUCAO">Em Produção</option>
+        <option value="PRONTO_RETIRADA">Pronto para Retirada</option>
+        <option value="ENVIADO">Enviado</option>
+        <option value="ENTREGUE">Entregue</option>
+        <option value="CANCELADO">Cancelado</option>
+    </select>
+
+    <select class="w-auto" @bind="_filtroAtivo">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i>Novo Pedido
+    </button>
+</div>
+
+@if (_pedidos is null)
+{
+    <p>Carregando...</p>
+}
+else if (!PedidosFiltrados.Any())
+{
+    <p>Nenhum pedido encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Emitente</th>
+                <th>Data Pedido</th>
+                <th>Previsão Entrega</th>
+                <th>Status</th>
+                <th>Valor Total</th>
+                <th>Ativo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in PedidosFiltrados)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@(p.OCliente?.NomeRazaoSocial ?? "—")</td>
+                    <td>@(p.OEmitente?.NomeRazaoSocial ?? "—")</td>
+                    <td>@p.DataPedido.ToString("dd/MM/yyyy")</td>
+                    <td>@(p.DataPrevisaoEntrega?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td>
+                        <span class="badge @ObterClasseStatus(p.Status)">
+                            @ObterNomeStatus(p.Status)
+                        </span>
+                    </td>
+                    <td>@p.ValorTotal.ToString("C2")</td>
+                    <td>
+                        <span class="badge @(p.Ativo ? "bg-success" : "bg-danger")">
+                            @(p.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(p.Id)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<PedidosModal @ref="_modalPedido" AoSalvarComSucesso="OnPedidoSalvo" />
