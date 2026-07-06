@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Localizacao;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,8 +16,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
             _repository = repository;
         }
 
-        public async Task<List<Cidades>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Cidades>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Cidades?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
@@ -27,6 +28,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Inserir(Cidades entity)
         {
+            NormalizarTextos(entity);
+
             bool cidadeExiste = await _repository.ExisteCidadeCadastradaAsync(entity.Cidade, entity.IdEstado);
             if (cidadeExiste)
                 throw new Exception("Já existe uma cidade cadastrada com este nome neste estado.");
@@ -41,6 +44,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Atualizar(Cidades entity)
         {
+            NormalizarTextos(entity);
+
             bool cidadeExiste = await _repository.ExisteCidadeCadastradaAsync(entity.Cidade, entity.IdEstado, entity.Id);
             if (cidadeExiste)
                 throw new Exception("Já existe outra cidade cadastrada com este nome neste estado.");
@@ -61,5 +66,12 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Cidades e)
+        {
+            e.Cidade = e.Cidade.Trim().ToUpperInvariant();
+            e.CodigoIbge = e.CodigoIbge.Trim();
+            e.Ddd = e.Ddd.Trim();
+        }
     }
 }

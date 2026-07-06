@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using MySql.Data.MySqlClient;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 
 namespace SI_Bianca_Franca_2026.Repositories.Localizacao
@@ -10,11 +11,11 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
 
         public PaisesRepository(IConfiguration configuration)
         {
-            _stringConexao = configuration.GetConnectionString("DefaultConnection");
+            _stringConexao = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private static string SqlBase => @"
-            SELECT 
+            SELECT
                 p.id,
                 p.pais,
                 p.sigla,
@@ -28,13 +29,32 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             FROM paises p
             LEFT JOIN usuarios u ON p.id_usuario_ultima_alteracao = u.id";
 
-        private static string SqlListar => SqlBase;
         private static string SqlPesquisar => SqlBase + " WHERE p.id = @Id";
 
-        public async Task<List<Paises>> ListarTudoAsync()
+        public async Task<List<Paises>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("p.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("p.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add("(p.pais LIKE @Busca OR p.sigla LIKE @Busca OR p.moeda LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY p.pais";
+
             using var conexao = new MySqlConnection(_stringConexao);
-            return (await conexao.QueryAsync<Paises>(SqlListar)).ToList();
+            return (await conexao.QueryAsync<Paises>(sql, param)).ToList();
         }
 
         public async Task<Paises?> PesquisarAsync(int id)
@@ -46,10 +66,10 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         public async Task InserirAsync(Paises entity)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"INSERT INTO paises 
-                           (pais, sigla, ddi, moeda, data_criacao, data_ultima_alteracao, 
+            string sql = @"INSERT INTO paises
+                           (pais, sigla, ddi, moeda, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
-                           VALUES 
+                           VALUES
                            (@Pais, @Sigla, @Ddi, @Moeda, @DataCriacao, @DataUltimaAlteracao,
                             @IdUsuarioUltimaAlteracao, @Ativo)";
             await conexao.ExecuteAsync(sql, entity);
@@ -58,11 +78,14 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         public async Task AtualizarAsync(Paises entity)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"UPDATE paises SET 
-                           pais = @Pais, sigla = @Sigla, ddi = @Ddi, moeda = @Moeda,
-                           data_ultima_alteracao = @DataUltimaAlteracao,
-                           id_usuario_ultima_alteracao = @IdUsuarioUltimaAlteracao,
-                           ativo = @Ativo
+            string sql = @"UPDATE paises SET
+                           pais                          = @Pais,
+                           sigla                         = @Sigla,
+                           ddi                           = @Ddi,
+                           moeda                         = @Moeda,
+                           data_ultima_alteracao         = @DataUltimaAlteracao,
+                           id_usuario_ultima_alteracao   = @IdUsuarioUltimaAlteracao,
+                           ativo                         = @Ativo
                            WHERE id = @Id";
             await conexao.ExecuteAsync(sql, entity);
         }
@@ -70,18 +93,12 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         public async Task AlterarStatusAsync(int id, bool novoStatus, int idUsuario)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"UPDATE paises SET 
-                           ativo = @Ativo,
-                           data_ultima_alteracao = @DataUltimaAlteracao,
-                           id_usuario_ultima_alteracao = @IdUsuario
-                           WHERE id = @Id";
-            await conexao.ExecuteAsync(sql, new
-            {
-                Ativo = novoStatus,
-                DataUltimaAlteracao = DateTime.Now,
-                IdUsuario = idUsuario,
-                Id = id
-            });
+            await conexao.ExecuteAsync(@"UPDATE paises SET
+                           ativo                         = @Ativo,
+                           data_ultima_alteracao         = @DataUltimaAlteracao,
+                           id_usuario_ultima_alteracao   = @IdUsuario
+                           WHERE id = @Id",
+                new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
         public async Task RemoverAsync(int id)
@@ -93,7 +110,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         public async Task<bool> ExistePaisCadastradoAsync(string nomePais, string sigla, int ignorarId = 0)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"SELECT COUNT(1) FROM paises 
+            string sql = @"SELECT COUNT(1) FROM paises
                            WHERE (pais = @Pais OR sigla = @Sigla) AND id != @Id";
             var quantidade = await conexao.ExecuteScalarAsync<int>(sql,
                 new { Pais = nomePais, Sigla = sigla, Id = ignorarId });

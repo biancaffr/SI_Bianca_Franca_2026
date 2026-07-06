@@ -1,0 +1,69 @@
+﻿@page "/metodos-pagamento"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro
+
+<div class="mb-3">
+    <h3 class="mb-0">Métodos de Pagamento</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
+
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i>Novo Método
+    </button>
+</div>
+
+@if (_metodos is null)
+{
+    <p>Carregando...</p>
+}
+else if (!_metodos.Any())
+{
+    <p>Nenhum método de pagamento encontrado.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Sigla</th>
+                <th>Método</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in _metodos)
+            {
+                var idLocal = m.Id;
+                <tr>
+                    <td>@m.Id</td>
+                    <td>@m.Sigla</td>
+                    <td>@m.Metodo</td>
+                    <td>
+                        <span class="badge @(m.Ativo ? "bg-success" : "bg-danger")">
+                            @(m.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(m)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<MetodosPagamentoModal @ref="_modalMetodo" AoSalvarComSucesso="OnMetodoSalvo" />

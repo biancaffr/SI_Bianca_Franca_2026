@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Localizacao;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,14 +16,16 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
             _repository = repository;
         }
 
-        public async Task<List<Paises>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Paises>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Paises?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(Paises entity)
         {
+            NormalizarTextos(entity);
+
             bool jaExiste = await _repository.ExistePaisCadastradoAsync(entity.Pais, entity.Sigla);
             if (jaExiste)
                 throw new Exception("Já existe um país cadastrado com esse Nome ou Sigla.");
@@ -33,6 +36,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Atualizar(Paises entity)
         {
+            NormalizarTextos(entity);
+
             bool jaExiste = await _repository.ExistePaisCadastradoAsync(entity.Pais, entity.Sigla, entity.Id);
             if (jaExiste)
                 throw new Exception("Já existe um país cadastrado com esse Nome ou Sigla.");
@@ -49,5 +54,13 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Paises p)
+        {
+            p.Pais = p.Pais.Trim().ToUpperInvariant();
+            p.Sigla = p.Sigla.Trim().ToUpperInvariant();
+            p.Ddi = p.Ddi.Trim();
+            p.Moeda = p.Moeda.Trim().ToUpperInvariant();
+        }
     }
 }

@@ -1,6 +1,5 @@
 @page "/fornecedores"
 @rendermode InteractiveServer
-@using SI_Bianca_Franca_2026.Models.Pessoa
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 
 <div class="mb-3">
@@ -9,8 +8,8 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
-    <select class="w-auto" @bind="filtroStatus">
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -20,11 +19,11 @@
     </button>
 </div>
 
-@if (fornecedores is null)
+@if (_fornecedores is null)
 {
     <p>Carregando...</p>
 }
-else if (!FornecedoresFiltrados.Any())
+else if (!_fornecedores.Any())
 {
     <p>Nenhum fornecedor encontrado.</p>
 }
@@ -36,18 +35,21 @@ else
                 <th>ID</th>
                 <th>Tipo</th>
                 <th>Nome / Razão Social</th>
+                <th>Cidade</th>
                 <th>CPF / CNPJ</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var f in FornecedoresFiltrados)
+            @foreach (var f in _fornecedores)
             {
+                var idLocal = f.Id;
                 <tr>
                     <td>@f.Id</td>
                     <td>@(f.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
                     <td>@f.NomeRazaoSocial</td>
+                    <td>@($"{f.OCidade.Cidade} - {f.OCidade.OEstado?.Uf}")</td>
                     <td>@(f.CpfCnpj ?? "—")</td>
                     <td>
                         <span class="badge @(f.Ativo ? "bg-success" : "bg-danger")">
@@ -56,7 +58,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick="() => AbrirEdicao(f.Id)">
+                                @onclick="() => AbrirEdicao(idLocal)">
                             Editar
                         </button>
                     </td>

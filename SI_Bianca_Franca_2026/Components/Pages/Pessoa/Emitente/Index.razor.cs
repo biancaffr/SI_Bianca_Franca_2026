@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Components;
+using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Pessoa;
 using SI_Bianca_Franca_2026.Services.Pessoa;
-using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa;
 
 namespace SI_Bianca_Franca_2026.Components.Pages.Pessoa.Emitente;
 
@@ -9,24 +10,9 @@ public partial class Index
 {
     [Inject] private EmitentesService EmitentesService { get; set; } = default!;
 
-    private List<Emitentes>? emitentes;
-    private string filtroStatus = "ativo";
-    private string termoPesquisa = string.Empty;
-
+    private List<Emitentes>? _emitentes;
+    private FiltroBaseDto _filtro = new();
     private EmitentesModal _modalEmitente = default!;
-
-    private IEnumerable<Emitentes> EmitentesFiltrados =>
-        (emitentes ?? [])
-        .Where(e => filtroStatus switch
-        {
-            "ativo" => e.Ativo,
-            "inativo" => !e.Ativo,
-            _ => true
-        })
-        .Where(e => string.IsNullOrWhiteSpace(termoPesquisa) ||
-                    e.NomeRazaoSocial.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    (e.CpfCnpj != null && e.CpfCnpj.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)) ||
-                    (e.ApelidoNomeFantasia != null && e.ApelidoNomeFantasia.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,7 +21,12 @@ public partial class Index
 
     private async Task CarregarEmitentes()
     {
-        emitentes = await EmitentesService.ListarTudo();
+        _emitentes = await EmitentesService.ListarTudo(_filtro);
+    }
+
+    private async Task OnFiltroAlterado()
+    {
+        await CarregarEmitentes();
     }
 
     private async Task AbrirCadastro() => await _modalEmitente.AbrirNovo();

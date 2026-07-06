@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
-using SI_Bianca_Franca_2026.Models.Localizacao;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.Localizacao;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Services.Localizacao;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao;
 
@@ -10,24 +11,9 @@ public partial class Index
 {
     [Inject] private PaisesService PaisesService { get; set; } = default!;
 
-    private List<Paises>? paises;
-    private string filtroStatus = "ativo";
-    private string termoPesquisa = string.Empty;
+    private List<Paises>? _paises;
+    private FiltroBaseDto _filtro = new();
     private PaisesModal _modalPais = default!;
-
-    private IEnumerable<Paises> PaisesFiltrados =>
-        (paises ?? [])
-        .Where(p => filtroStatus switch
-        {
-            "ativo" => p.Ativo,
-            "inativo" => !p.Ativo,
-            _ => true
-        })
-        .Where(p => string.IsNullOrWhiteSpace(termoPesquisa) ||
-                    p.Pais.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    p.Sigla.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    p.Ddi.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    p.Moeda.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,7 +22,12 @@ public partial class Index
 
     private async Task CarregarPaises()
     {
-        paises = await PaisesService.ListarTudo();
+        _paises = await PaisesService.ListarTudo(_filtro);
+    }
+
+    private async Task OnFiltroAlterado()
+    {
+        await CarregarPaises();
     }
 
     private void AbrirCadastro() => _modalPais.Abrir();

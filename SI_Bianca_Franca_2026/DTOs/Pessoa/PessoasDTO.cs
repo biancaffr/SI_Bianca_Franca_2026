@@ -22,7 +22,9 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
         [MaxLength(50)]
         public string? ApelidoNomeFantasia { get; set; }
 
-        public int? IdCidade { get; set; }
+        [Required(ErrorMessage = "Campo obrigatório")]
+        [Range(1, int.MaxValue, ErrorMessage = "Selecione uma Cidade válida")]
+        public int IdCidade { get; set; }
 
         [MaxLength(50)]
         public string? Bairro { get; set; }
@@ -38,10 +40,6 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
 
         [MaxLength(8)]
         public string? Cep { get; set; }
-
-        [Required(ErrorMessage = "Campo obrigatório")]
-        [Range(1, int.MaxValue, ErrorMessage = "Selecione um País válido")]
-        public int IdPais { get; set; }
 
         [MaxLength(12)]
         public string? Telefone { get; set; }

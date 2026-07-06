@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using Dapper;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Models.Pessoa;
 
@@ -11,7 +12,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
 
         public VeiculosRepository(IConfiguration configuration)
         {
-            _stringConexao = configuration.GetConnectionString("DefaultConnection");
+            _stringConexao = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private static string SqlBase => @"
@@ -30,10 +31,10 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                 v.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
                 v.ativo,
                 u.nome                      AS NomeUsuarioAlteracao,
-                e.id,
+                e.id                        AS EstadoId,
                 e.estado,
                 e.uf,
-                t.id,
+                t.id                        AS TransportadoraId,
                 t.nome_razao_social         AS NomeRazaoSocial
             FROM veiculos v
             LEFT JOIN usuarios u        ON v.id_usuario_ultima_alteracao = u.id
@@ -41,7 +42,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
             LEFT JOIN transportadoras t ON v.id_transportadora = t.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE v.id = @Id";
-        private static string SqlPorEstado => SqlBase + " WHERE v.id_estado = @IdEstado AND v.ativo = 1";
 
         private static Veiculos MapearVeiculo(Veiculos veiculo, Estados estado, Transportadoras transportadora)
         {
@@ -51,14 +51,38 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
             return veiculo;
         }
 
-        public async Task<List<Veiculos>> ListarTudoAsync()
+        public async Task<List<Veiculos>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("v.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("v.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add(@"(v.placa          LIKE @Busca
+                          OR v.tipo_veiculo   LIKE @Busca
+                          OR v.marca_modelo   LIKE @Busca
+                          OR v.rntrc          LIKE @Busca
+                          OR e.uf             LIKE @Busca
+                          OR t.nome_razao_social LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY v.placa";
+
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Veiculos, Estados, Transportadoras, Veiculos>(
-                SqlBase,
-                MapearVeiculo,
-                splitOn: "id,id"
-            );
+                sql, MapearVeiculo,
+                splitOn: "EstadoId,TransportadoraId",
+                param: param);
             return resultado.ToList();
         }
 
@@ -66,11 +90,9 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
         {
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Veiculos, Estados, Transportadoras, Veiculos>(
-                SqlPesquisar,
-                MapearVeiculo,
-                splitOn: "id,id",
-                param: new { Id = id }
-            );
+                SqlPesquisar, MapearVeiculo,
+                splitOn: "EstadoId,TransportadoraId",
+                param: new { Id = id });
             return resultado.FirstOrDefault();
         }
 
@@ -110,18 +132,12 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
         public async Task AlterarStatusAsync(int id, bool novoStatus, int idUsuario)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"UPDATE veiculos SET
+            await conexao.ExecuteAsync(@"UPDATE veiculos SET
                            ativo                         = @Ativo,
                            data_ultima_alteracao         = @DataUltimaAlteracao,
                            id_usuario_ultima_alteracao   = @IdUsuario
-                           WHERE id = @Id";
-            await conexao.ExecuteAsync(sql, new
-            {
-                Ativo = novoStatus,
-                DataUltimaAlteracao = DateTime.Now,
-                IdUsuario = idUsuario,
-                Id = id
-            });
+                           WHERE id = @Id",
+                new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
         public async Task RemoverAsync(int id)
@@ -133,9 +149,8 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
         public async Task<bool> ExistePlacaCadastradaAsync(string placa, int ignorarId = 0)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"SELECT COUNT(1) FROM veiculos
-                           WHERE placa = @Placa AND id != @Id";
-            var qtde = await conexao.ExecuteScalarAsync<int>(sql,
+            var qtde = await conexao.ExecuteScalarAsync<int>(
+                "SELECT COUNT(1) FROM veiculos WHERE placa = @Placa AND id != @Id",
                 new { Placa = placa, Id = ignorarId });
             return qtde > 0;
         }

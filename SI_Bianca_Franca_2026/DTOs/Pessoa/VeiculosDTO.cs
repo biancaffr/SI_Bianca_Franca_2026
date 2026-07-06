@@ -13,19 +13,19 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
         public int IdEstado { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        [MaxLength(10)]
+        [MaxLength(7)]
         public string Placa { get; set; } = string.Empty;
 
-        [MaxLength(20)]
+        [MaxLength(8)]
         public string? Rntrc { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(11)]
         public string? Renavam { get; set; }
 
         [MaxLength(50)]
         public string? TipoVeiculo { get; set; }
 
-        [MaxLength(100)]
+        [MaxLength(50)]
         public string? MarcaModelo { get; set; }
 
         public string? Observacao { get; set; }

@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Pessoa;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Pessoa;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,14 +16,16 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
             _repository = repository;
         }
 
-        public async Task<List<Veiculos>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Veiculos>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Veiculos?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(Veiculos entity)
         {
+            NormalizarTextos(entity);
+
             bool placaExiste = await _repository.ExistePlacaCadastradaAsync(entity.Placa);
             if (placaExiste)
                 throw new Exception("Já existe um veículo cadastrado com esta placa.");
@@ -33,6 +36,8 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
 
         public async Task Atualizar(Veiculos entity)
         {
+            NormalizarTextos(entity);
+
             bool placaExiste = await _repository.ExistePlacaCadastradaAsync(entity.Placa, entity.Id);
             if (placaExiste)
                 throw new Exception("Já existe outro veículo cadastrado com esta placa.");
@@ -49,5 +54,13 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Veiculos v)
+        {
+            v.MarcaModelo=v.MarcaModelo.Trim().ToUpperInvariant();
+            v.Placa=v.Placa.Trim().ToUpperInvariant();
+            v.TipoVeiculo=v.TipoVeiculo.Trim().ToUpperInvariant();
+        }
+
     }
 }

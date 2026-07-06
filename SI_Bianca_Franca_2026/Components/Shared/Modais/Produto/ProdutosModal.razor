@@ -3,10 +3,9 @@
 @using SI_Bianca_Franca_2026.Components.Shared
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto
 
-
 <Modal Visivel="_aberto"
        Titulo="@(_dto.Id == 0 ? "Novo Produto" : "Editar Produto")"
-       Largura="1530px"
+       Largura="1100px"
        AoFechar="Fechar">
 
     @if (!string.IsNullOrEmpty(_erro))
@@ -29,7 +28,7 @@
 
                 @if (_dto.Id != 0)
                 {
-                    <div class="form-group">
+                    <div class="form-group" style="width: 80px;">
                         <label>Código</label>
                         <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
                     </div>
@@ -40,9 +39,11 @@
                     <div class="form-group" style="width: 165px;">
                         <label class="obrigatorio">Tipo</label>
                         <InputSelect class="form-select" @bind-Value="_dto.Tipo">
+                            <option value="">Selecione...</option>
                             <option value="PRODUTO_FINAL">Produto Final</option>
                             <option value="MATERIA_PRIMA">Matéria-Prima</option>
                         </InputSelect>
+                        <ValidationMessage For="@(() => _dto.Tipo)" class="text-danger" />
                     </div>
                 }
                 else
@@ -54,50 +55,130 @@
                     </div>
                 }
 
-                <div class="form-group" style="width: 475px;">
+                <div class="form-group" style="flex: 1; min-width: 300px;">
                     <label class="obrigatorio">Produto</label>
-                    <InputText class="form-control" @bind-Value="_dto.Produto" maxlength="50"
-                               placeholder="Ex.: Agenda A5 Personalizada" />
+                    <InputText class="form-control" @bind-Value="_dto.Produto" maxlength="70"/>
                     <ValidationMessage For="@(() => _dto.Produto)" class="text-danger" />
                 </div>
 
-                <div class="form-group" style="width: 200px;">
+                <div class="form-group" style="width: 260px;">
+                    <label class="obrigatorio">Unidade de Medida</label>
+                    <div class="input-group">
+                        <InputSelect class="form-select" @bind-Value="_dto.IdUnidadeMedida">
+                            <option value="0">Selecione...</option>
+                            @foreach (var u in _unidades)
+                            {
+                                <option value="@u.Id.ToString()">@u.Sigla — @u.UnidadeMedida</option>
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-outline-secondary"
+                                title="Nova unidade" @onclick="AbrirModalNovaUnidade">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <ValidationMessage For="@(() => _dto.IdUnidadeMedida)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="width: 230px;">
                     <label class="obrigatorio">Categoria</label>
-                    <InputSelect class="form-control" @bind-Value="_dto.IdCategoria">
-                        <option value="0">Selecione...</option>
-                        @foreach (var c in _categorias)
-                        {
-                            <option value="@c.Id.ToString()">@c.Categoria</option>
-                        }
-                    </InputSelect>
+                    <div class="input-group">
+                        <InputSelect class="form-select" @bind-Value="_dto.IdCategoria">
+                            <option value="0">Selecione...</option>
+                            @foreach (var c in _categorias)
+                            {
+                                <option value="@c.Id.ToString()">@c.Categoria</option>
+                            }
+                        </InputSelect>
+                        <button type="button" class="btn btn-outline-secondary"
+                                title="Nova categoria" @onclick="AbrirModalNovaCategoria">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
                     <ValidationMessage For="@(() => _dto.IdCategoria)" class="text-danger" />
                 </div>
 
-                <div class="form-group" style="width: 200px;">
-                    <label class="obrigatorio">Unidade de Medida</label>
-                    <InputSelect class="form-control" @bind-Value="_dto.IdUnidadeMedida">
-                        <option value="0">Selecione...</option>
-                        @foreach (var u in _unidades)
-                        {
-                            <option value="@u.Id.ToString()">@u.Sigla — @u.Descricao</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => _dto.IdUnidadeMedida)" class="text-danger" />
+                <div class="form-group" style="width: 160px;">
+                    <label>Referência</label>
+                    <InputText class="form-control" @bind-Value="_dto.Referencia" maxlength="20" />
+                </div>
+
+                <div class="form-group" style="width: 100px;">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr />
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;" @key="_dto.Id">
+
+                <div class="form-group" style="width: 140px;">
+                    <label>Saldo</label>
+                    <input class="form-control" type="text" maxlength="11" value="@SaldoTexto"
+                           @onchange="e => SaldoTexto = e.Value?.ToString() ?? string.Empty" />
+
+                    <ValidationMessage For="@(() => _dto.Saldo)" class="text-danger" />
+                </div>
+
+                <div class="form-group" style="width: 140px;">
+                    <label>Estoque Mín</label>
+                    <input class="form-control" type="text" maxlength="11" value="@EstoqueMinimoTexto"
+                           @onchange="e => EstoqueMinimoTexto = e.Value?.ToString() ?? string.Empty" />
+                    <ValidationMessage For="@(() => _dto.EstoqueMinimo)" class="text-danger" />
+                </div>
+
+
+                <div class="form-group" style="width: 180px;">
+                    <label>Preço de Custo</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input class="form-control" type="text" maxlength="8" value="@PrecoCustoTexto"
+                               @onchange="e => PrecoCustoTexto = e.Value?.ToString() ?? string.Empty" />
+                    </div>
+                    <ValidationMessage For="@(() => _dto.PrecoCusto)" class="text-danger" />
+                </div>
+
+                @if (_dto.Tipo == "PRODUTO_FINAL")
+                {
+                    <div class="form-group" style="width: 180px;">
+                        <label>Preço de Venda</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input class="form-control" type="text" maxlength="8"
+                                   value="@PrecoVendaTexto"
+                                   @onchange="e => PrecoVendaTexto = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                        <ValidationMessage For="@(() => _dto.PrecoVenda)" class="text-danger" />
+                    </div>
+                }
+
+                <div class="form-group" style="width: 180px;">
+                    <label>Valor Última Compra</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input class="form-control" type="text" maxlength="8" value="@ValorUltimaCompraTexto"
+                               @onchange="e => ValorUltimaCompraTexto = e.Value?.ToString() ?? string.Empty" />
+                    </div>
+                    <ValidationMessage For="@(() => _dto.ValorUltimaCompra)" class="text-danger" />
                 </div>
 
                 <div class="form-group" style="width: 130px;">
                     <label>NCM</label>
-                    <InputText class="form-control" @bind-Value="_dto.Ncm" maxlength="8"
-                               placeholder="00000000" />
+                    <InputText class="form-control" @bind-Value="_dto.Ncm" maxlength="8"/>
                     <ValidationMessage For="@(() => _dto.Ncm)" class="text-danger" />
                 </div>
+
                 <div class="form-group" style="width: 115px;">
                     <label>CEST</label>
-                    <InputText class="form-control" @bind-Value="_dto.Cest" maxlength="7"
-                               placeholder="0000000" />
+                    <InputText class="form-control" @bind-Value="_dto.Cest" maxlength="7"/>
                     <ValidationMessage For="@(() => _dto.Cest)" class="text-danger" />
                 </div>
-                <div class="form-group" style="width: 600px;">
+
+                <div class="form-group" style="width: 320px;">
                     <label>Origem</label>
                     <InputSelect class="form-control" @bind-Value="_dto.Origem">
                         @foreach (var o in OrigensDisponiveis)
@@ -106,250 +187,33 @@
                         }
                     </InputSelect>
                 </div>
+
             </div>
 
-            <div class="card mb-3">
+            <div class="card mb-3 mt-2">
                 <div class="card-header">Observações</div>
                 <div class="card-body">
-                    <InputTextArea class="form-control" @bind-Value="_dto.Observacao" rows="3" />
+                    <InputTextArea class="form-control" @bind-Value="_dto.Observacao" rows="2" />
                 </div>
             </div>
-
-            @if (_dto.Tipo == "MATERIA_PRIMA")
-            {
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="possuiVariacoes"
-                                   @bind="_possuiVariacoesProxy" />
-                            <label class="form-check-label" for="possuiVariacoes">
-                                Este produto possui variações
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                @if (!_possuiVariacoes)
-                {
-                    <div class="card mb-3">
-                        <div class="card-header">SKU</div>
-                        <div class="card-body">
-                            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-                                <div class="form-group" style="width: 160px;">
-                                    <label class="obrigatorio">Código SKU</label>
-                                    <input class="form-control" @bind="_skuUnico.Sku"
-                                           disabled="@(!string.IsNullOrEmpty(_skuUnico.SkuOriginalNoBanco))"
-                                           placeholder="Ex.: ARGOLA" />
-                                </div>
-                                <div class="form-group" style="width: 160px;">
-                                    <label>GTIN/EAN</label>
-                                    <input class="form-control" @bind="_skuUnico.GtinEan" />
-                                </div>
-                                <div class="form-group" style="width: 130px;">
-                                    <label>Preço Custo</label>
-                                    <input class="form-control" type="text"
-                                           value="@(_skuUnico.PrecoCusto?.ToString("N2") ?? "")"
-                                           @onchange="e => AtualizarPreco(_skuUnico, e.Value?.ToString())" />
-                                </div>
-                                <div class="form-group" style="width: 110px;">
-                                    <label>Estoque</label>
-                                    <input class="form-control" type="text"
-                                           value="@_skuUnico.Estoque.ToString("N2")"
-                                           @onchange="e => AtualizarEstoque(_skuUnico, e.Value?.ToString())" />
-                                </div>
-                                <div class="form-group" style="width: 110px;">
-                                    <label>Estoque Mín.</label>
-                                    <input class="form-control" type="text"
-                                           value="@_skuUnico.EstoqueMinimo.ToString("N2")"
-                                           @onchange="e => AtualizarEstoqueMinimo(_skuUnico, e.Value?.ToString())" />
-                                </div>
-                                <div class="form-group" style="width: 100px;">
-                                    <label>Ativo</label>
-                                    <div class="form-check form-switch mt-1">
-                                        <input class="form-check-input" type="checkbox" @bind="_skuUnico.Ativo" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="card mb-3">
-                        <div class="card-header">Opções de Variação</div>
-                        <div class="card-body">
-                            @for (int i = 0; i < _opcoes.Count; i++)
-                            {
-                                var idx = i;
-                                <OpcaoVariacaoEditor Opcao="_opcoes[idx]"
-                                                     ChavesDisponiveis="_chaves"
-                                                     Indice="idx + 1"
-                                                     AoMudar="RecalcularVariacoes"
-                                                     AoRemover="() => RemoverOpcao(idx)"
-                                                     AoGerenciarChaves="AbrirListaChaves" />
-                            }
-
-                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                    @onclick="AdicionarOpcao">
-                                <i class="bi bi-plus-lg me-1"></i>Adicionar Opção
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="card mb-3">
-                        <div class="card-header">Variações de SKU (@_variacoes.Count)</div>
-                        <div class="card-body">
-                            @if (!_variacoes.Any())
-                            {
-                                <p class="text-muted">Defina ao menos uma opção com valores para gerar as variações.</p>
-                            }
-                            else
-                            {
-                                <table class="table table-sm align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 160px;">Código SKU</th>
-                                            <th>Variação</th>
-                                            <th style="width: 120px;">Preço Custo</th>
-                                            <th style="width: 140px;">EAN</th>
-                                            <th style="width: 90px;">Estoque</th>
-                                            <th style="width: 90px;">Estoque Mínimo</th>
-                                            <th style="width: 80px;">Ativo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var v in _variacoes)
-                                        {
-                                            <tr class="@(v.SeraDesativada ? "table-warning" : "")">
-                                                <td>
-                                                    <input class="form-control form-control-sm" @bind="v.Sku"
-                                                           disabled="@(!string.IsNullOrEmpty(v.SkuOriginalNoBanco))" />
-                                                </td>
-                                                <td>
-                                                    @v.Variacao
-                                                    @if (v.SeraDesativada)
-                                                    {
-                                                        <br /><small class="text-warning">⚠ Será desativada ao salvar</small>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    <input class="form-control form-control-sm" type="text"
-                                                           value="@(v.PrecoCusto?.ToString("N2") ?? "")"
-                                                           @onchange="e => AtualizarPreco(v, e.Value?.ToString())" />
-                                                </td>
-                                                <td><input class="form-control form-control-sm" @bind="v.GtinEan" /></td>
-                                                <td>
-                                                    <input class="form-control form-control-sm" type="text"
-                                                           value="@v.Estoque.ToString("N2")"
-                                                           @onchange="e => AtualizarEstoque(v, e.Value?.ToString())" />
-                                                </td>
-                                                <td>
-                                                    <input class="form-control form-control-sm" type="text"
-                                                           value="@v.EstoqueMinimo.ToString("N2")"
-                                                           @onchange="e => AtualizarEstoqueMinimo(v, e.Value?.ToString())" />
-                                                </td>
-                                                <td>
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" @bind="v.Ativo" />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-
-            @if (_dto.Tipo == "PRODUTO_FINAL")
-            {
-                <div class="card mb-3">
-                    <div class="card-header">Ficha Técnica</div>
-                    <div class="card-body">
-                        @if (!_fichaItens.Any())
-                        {
-                            <p class="text-muted">Nenhum material adicionado ainda.</p>
-                        }
-                        else
-                        {
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th style="width: 110px;">Quantidade</th>
-                                        <th style="width: 70px;">Unid.</th>
-                                        <th>Observação</th>
-                                        <th style="width: 40px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in _fichaItens)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <select class="form-select form-select-sm" value="@item.IdProdutoMaterial"
-                                                        @onchange="e => AtualizarMaterial(item, e.Value?.ToString())">
-                                                    <option value="0">Selecione...</option>
-                                                    @foreach (var m in _materiais)
-                                                    {
-                                                        <option value="@m.Id">@m.Produto</option>
-                                                    }
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input class="form-control form-control-sm" type="text"
-                                                       value="@item.Quantidade.ToString("N4")"
-                                                       @onchange="e => AtualizarQuantidade(item, e.Value?.ToString())" />
-                                            </td>
-                                            <td class="text-muted">
-                                                @(_materiais.FirstOrDefault(m => m.Id == item.IdProdutoMaterial)?.OUnidadeMedida?.Sigla ?? "—")
-                                            </td>
-                                            <td>
-                                                <input class="form-control form-control-sm" @bind="item.Observacao" />
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        @onclick="() => RemoverItemFicha(item)">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        }
-
-                        <button type="button" class="btn btn-outline-secondary btn-sm"
-                                @onclick="AdicionarItemFicha">
-                            <i class="bi bi-plus-lg me-1"></i>Adicionar Material
-                        </button>
-                    </div>
-                </div>
-            }
 
             @if (_dto.Id != 0)
             {
-                <div class="card mb-3">
-                    <div class="card-header">Informações do Registro</div>
-                    <div class="card-body">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                            <div class="form-group">
-                                <label>Data de Criação</label>
-                                <input class="form-control" disabled
-                                       value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
-                            </div>
-                            <div class="form-group">
-                                <label>Última Alteração</label>
-                                <input class="form-control" disabled
-                                       value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
-                            </div>
-                            <div class="form-group">
-                                <label>Alterado por</label>
-                                <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
-                            </div>
-                        </div>
+                <hr />
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Data de Criação</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Última Alteração</label>
+                        <input class="form-control" disabled
+                               value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                    </div>
+                    <div class="form-group">
+                        <label>Alterado por</label>
+                        <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
                     </div>
                 </div>
             }
@@ -358,8 +222,10 @@
                 <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Salvar</button>
             </div>
+
         </EditForm>
     }
 </Modal>
 
-<SkuAtributosChavesListaModal @ref="_modalListaChaves" AoAtualizarLista="OnListaChavesAtualizada" />
+<CategoriasModal @ref="_modalCategoria" AoSalvarComSucesso="OnCategoriaSalva" />
+<UnidadesMedidaModal @ref="_modalUnidade" AoSalvarComSucesso="OnUnidadeSalva" />

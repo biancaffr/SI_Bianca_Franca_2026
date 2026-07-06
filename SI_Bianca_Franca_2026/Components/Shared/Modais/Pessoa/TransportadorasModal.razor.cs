@@ -19,10 +19,7 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
     {
         _erro = string.Empty;
         _dto = new TransportadorasDTO { Ativo = true };
-        _idEstadoSelecionado = 0;
-        _estadosFiltrados = new();
-        _cidadesFiltradas = new();
-        await CarregarPaisesAsync();
+        await CarregarCidadesAsync();
         _aberto = true;
         StateHasChanged();
     }
@@ -33,8 +30,6 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
         _carregando = true;
         _aberto = true;
         StateHasChanged();
-
-        await CarregarPaisesAsync();
 
         var transportadora = await TransportadorasService.Pesquisar(id);
         if (transportadora is null) { _aberto = false; StateHasChanged(); return; }
@@ -47,7 +42,6 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
             CpfCnpj = transportadora.CpfCnpj,
             RgIe = transportadora.RgIe,
             ApelidoNomeFantasia = transportadora.ApelidoNomeFantasia,
-            IdPais = transportadora.IdPais,
             IdCidade = transportadora.IdCidade,
             Bairro = transportadora.Bairro,
             Logradouro = transportadora.Logradouro,
@@ -64,7 +58,7 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
             NomeUsuarioAlteracao = transportadora.NomeUsuarioAlteracao
         };
 
-        await CarregarLocalizacaoDoRegistroAsync();
+        await CarregarCidadesAsync();
 
         _carregando = false;
         StateHasChanged();
@@ -99,8 +93,7 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
         CpfCnpj = _dto.CpfCnpj != null ? new string(_dto.CpfCnpj.Where(char.IsDigit).ToArray()) : null,
         RgIe = _dto.RgIe,
         ApelidoNomeFantasia = _dto.ApelidoNomeFantasia,
-        IdPais = _dto.IdPais,
-        IdCidade = _dto.IdCidade == 0 ? null : _dto.IdCidade,
+        IdCidade = _dto.IdCidade,
         Bairro = _dto.Bairro,
         Logradouro = _dto.Logradouro,
         Numero = _dto.Numero,

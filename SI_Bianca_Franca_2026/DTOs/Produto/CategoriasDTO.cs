@@ -7,12 +7,8 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        [MaxLength(100)]
+        [MaxLength(30, ErrorMessage = "Máximo de 30 caracteres")]
         public string Categoria { get; set; } = string.Empty;
-
-        [MaxLength(255)]
-        public string? Descricao { get; set; }
-
         public bool Ativo { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime DataUltimaAlteracao { get; set; }

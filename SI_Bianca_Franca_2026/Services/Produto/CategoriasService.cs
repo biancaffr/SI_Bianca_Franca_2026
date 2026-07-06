@@ -1,4 +1,6 @@
-﻿using SI_Bianca_Franca_2026.Models.Produto;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Pessoa;
+using SI_Bianca_Franca_2026.Models.Produto;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,14 +17,16 @@ namespace SI_Bianca_Franca_2026.Services.Produto
             _repository = repository;
         }
 
-        public async Task<List<Categorias>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Categorias>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Categorias?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(Categorias entity)
         {
+            NormalizarTextos(entity);
+
             bool categoriaExiste = await _repository.ExisteCategoriaCadastradaAsync(entity.Categoria);
             if (categoriaExiste)
                 throw new Exception("Já existe uma categoria cadastrada com este nome.");
@@ -33,6 +37,8 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Atualizar(Categorias entity)
         {
+            NormalizarTextos(entity);
+
             bool categoriaExiste = await _repository.ExisteCategoriaCadastradaAsync(entity.Categoria, entity.Id);
             if (categoriaExiste)
                 throw new Exception("Já existe outra categoria cadastrada com este nome.");
@@ -49,5 +55,10 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Categorias c)
+        {
+            c.Categoria = c.Categoria.Trim().ToUpperInvariant();
+        }
     }
 }

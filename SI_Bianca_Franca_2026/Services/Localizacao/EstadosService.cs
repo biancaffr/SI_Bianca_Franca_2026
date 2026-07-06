@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Localizacao;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,8 +16,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
             _repository = repository;
         }
 
-        public async Task<List<Estados>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Estados>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
         public async Task<List<Estados>> ListarPorPais(int idPais)
             => await _repository.ListarPorPaisAsync(idPais);
 
@@ -25,6 +26,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Inserir(Estados entity)
         {
+            NormalizarTextos(entity);
+
             bool jaExiste = await _repository.ExisteEstadoCadastradoAsync(entity.Estado, entity.Uf, entity.IdPais);
             if (jaExiste)
                 throw new Exception("Já existe um estado cadastrado com este Nome ou UF para o país selecionado.");
@@ -35,6 +38,8 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Atualizar(Estados entity)
         {
+            NormalizarTextos(entity);
+
             bool jaExiste = await _repository.ExisteEstadoCadastradoAsync(entity.Estado, entity.Uf, entity.IdPais, entity.Id);
             if (jaExiste)
                 throw new Exception("Já existe outro estado cadastrado com este Nome ou UF neste país.");
@@ -51,5 +56,11 @@ namespace SI_Bianca_Franca_2026.Services.Localizacao
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Estados e)
+        {
+            e.Estado = e.Estado.Trim().ToUpperInvariant();
+            e.Uf = e.Uf.Trim().ToUpperInvariant();
+        }
     }
 }

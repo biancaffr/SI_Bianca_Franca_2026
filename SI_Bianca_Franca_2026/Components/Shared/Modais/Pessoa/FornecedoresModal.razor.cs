@@ -19,10 +19,7 @@ public partial class FornecedoresModal : PessoaModalBase<FornecedoresDTO>
     {
         _erro = string.Empty;
         _dto = new FornecedoresDTO { Ativo = true };
-        _idEstadoSelecionado = 0;
-        _estadosFiltrados = new();
-        _cidadesFiltradas = new();
-        await CarregarPaisesAsync();
+        await CarregarCidadesAsync();
         _aberto = true;
         StateHasChanged();
     }
@@ -33,8 +30,6 @@ public partial class FornecedoresModal : PessoaModalBase<FornecedoresDTO>
         _carregando = true;
         _aberto = true;
         StateHasChanged();
-
-        await CarregarPaisesAsync();
 
         var fornecedor = await FornecedoresService.Pesquisar(id);
         if (fornecedor is null) { _aberto = false; StateHasChanged(); return; }
@@ -47,7 +42,6 @@ public partial class FornecedoresModal : PessoaModalBase<FornecedoresDTO>
             CpfCnpj = fornecedor.CpfCnpj,
             RgIe = fornecedor.RgIe,
             ApelidoNomeFantasia = fornecedor.ApelidoNomeFantasia,
-            IdPais = fornecedor.IdPais,
             IdCidade = fornecedor.IdCidade,
             Bairro = fornecedor.Bairro,
             Logradouro = fornecedor.Logradouro,
@@ -63,7 +57,7 @@ public partial class FornecedoresModal : PessoaModalBase<FornecedoresDTO>
             NomeUsuarioAlteracao = fornecedor.NomeUsuarioAlteracao
         };
 
-        await CarregarLocalizacaoDoRegistroAsync();
+        await CarregarCidadesAsync();
 
         _carregando = false;
         StateHasChanged();
@@ -98,8 +92,7 @@ public partial class FornecedoresModal : PessoaModalBase<FornecedoresDTO>
         CpfCnpj = _dto.CpfCnpj != null ? new string(_dto.CpfCnpj.Where(char.IsDigit).ToArray()) : null,
         RgIe = _dto.RgIe,
         ApelidoNomeFantasia = _dto.ApelidoNomeFantasia,
-        IdPais = _dto.IdPais,
-        IdCidade = _dto.IdCidade == 0 ? null : _dto.IdCidade,
+        IdCidade = _dto.IdCidade,
         Bairro = _dto.Bairro,
         Logradouro = _dto.Logradouro,
         Numero = _dto.Numero,

@@ -199,4 +199,14 @@ h1:focus {
 .home-card-label {
     font-size: 0.825rem;
     font-weight: 600;
-}
+}
+
+input.form-control:not([type="checkbox"]):not([type="radio"]):not([disabled]),
+textarea.form-control:not([disabled]) {
+    text-transform: uppercase;
+}
+
+input.form-control::placeholder,
+textarea.form-control::placeholder {
+    text-transform: none;
+}

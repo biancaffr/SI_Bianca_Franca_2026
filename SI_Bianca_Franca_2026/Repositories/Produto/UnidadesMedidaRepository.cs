@@ -1,5 +1,6 @@
-﻿using MySql.Data.MySqlClient;
-using Dapper;
+﻿using Dapper;
+using MySql.Data.MySqlClient;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Produto;
 
 namespace SI_Bianca_Franca_2026.Repositories.Produto
@@ -17,7 +18,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             SELECT
                 u.id,
                 u.sigla,
-                u.descricao,
+                u.unidade_medida            AS UnidadeMedida,
                 u.categoria,
                 u.data_criacao              AS DataCriacao,
                 u.data_ultima_alteracao     AS DataUltimaAlteracao,
@@ -29,10 +30,32 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
 
         private static string SqlPesquisar => SqlBase + " WHERE u.id = @Id";
 
-        public async Task<List<UnidadesMedida>> ListarTudoAsync()
+        public async Task<List<UnidadesMedida>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("u.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("u.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add(@"(u.sigla LIKE @Busca
+                  OR u.unidade_medida LIKE @Busca
+                  OR u.categoria LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY u.unidade_medida";
+
             using var conexao = new MySqlConnection(_stringConexao);
-            return (await conexao.QueryAsync<UnidadesMedida>(SqlBase)).ToList();
+            return (await conexao.QueryAsync<UnidadesMedida>(sql, param)).ToList();
         }
 
         public async Task<UnidadesMedida?> PesquisarAsync(int id)
@@ -45,10 +68,10 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO unidades_medida
-                           (sigla, descricao, categoria, data_criacao, data_ultima_alteracao,
+                           (sigla, unidade_medida, categoria, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Sigla, @Descricao, @Categoria, @DataCriacao, @DataUltimaAlteracao,
+                           (@Sigla, @UnidadeMedida, @Categoria, @DataCriacao, @DataUltimaAlteracao,
                             @IdUsuarioUltimaAlteracao, @Ativo)";
             await conexao.ExecuteAsync(sql, entity);
         }
@@ -58,7 +81,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"UPDATE unidades_medida SET
                            sigla                         = @Sigla,
-                           descricao                     = @Descricao,
+                           unidade_medida                = @UnidadeMedida,
                            categoria                     = @Categoria,
                            data_ultima_alteracao         = @DataUltimaAlteracao,
                            id_usuario_ultima_alteracao   = @IdUsuarioUltimaAlteracao,

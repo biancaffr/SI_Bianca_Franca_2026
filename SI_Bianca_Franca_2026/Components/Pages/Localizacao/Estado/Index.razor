@@ -9,23 +9,24 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
 
-    <select class="w-auto" @bind="filtroStatus">
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
     </select>
+
     <button class="btn btn-primary" @onclick="AbrirCadastro">
         <i class="bi bi-plus-lg me-1"></i>Novo Estado
-    </button>    
+    </button>
 </div>
 
-@if (estados is null)
+@if (_estados is null)
 {
     <p>Carregando...</p>
 }
-else if (!EstadosFiltrados.Any())
+else if (!_estados.Any())
 {
     <p>Nenhum estado encontrado.</p>
 }
@@ -43,13 +44,13 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var est in EstadosFiltrados)
+            @foreach (var est in _estados)
             {
                 <tr>
                     <td>@est.Id</td>
                     <td>@est.Estado</td>
                     <td>@est.Uf</td>
-                    <td>@(est.OPais?.Pais ?? "Não informado")</td>
+                    <td>@(est.OPais?.Pais ?? "—")</td>
                     <td>
                         <span class="badge @(est.Ativo ? "bg-success" : "bg-danger")">
                             @(est.Ativo ? "Ativo" : "Inativo")

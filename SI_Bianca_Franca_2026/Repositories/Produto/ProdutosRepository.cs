@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using Dapper;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Produto;
 
 namespace SI_Bianca_Franca_2026.Repositories.Produto
@@ -10,13 +11,19 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
 
         public ProdutosRepository(IConfiguration configuration)
         {
-            _stringConexao = configuration.GetConnectionString("DefaultConnection");
+            _stringConexao = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private static string SqlBase => @"
             SELECT
                 p.id,
                 p.produto,
+                p.referencia,
+                p.saldo,
+                p.preco_custo               AS PrecoCusto,
+                p.preco_venda               AS PrecoVenda,
+                p.estoque_minimo            AS EstoqueMinimo,
+                p.valor_ultima_compra       AS ValorUltimaCompra,
                 p.tipo,
                 p.id_categoria              AS IdCategoria,
                 p.id_unidade_medida         AS IdUnidadeMedida,
@@ -29,18 +36,18 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 p.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
                 p.ativo,
                 u.nome                      AS NomeUsuarioAlteracao,
-                c.id,
+                c.id                        AS CategoriaId,
                 c.categoria,
-                um.id,
+                um.id                       AS UnidadeId,
                 um.sigla,
-                um.descricao
+                um.unidade_medida           AS UnidadeMedida
             FROM produtos p
             LEFT JOIN usuarios u        ON p.id_usuario_ultima_alteracao = u.id
             INNER JOIN categorias c     ON p.id_categoria = c.id
             INNER JOIN unidades_medida um ON p.id_unidade_medida = um.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE p.id = @Id";
-        private static string SqlPorTipo => SqlBase + " WHERE p.tipo = @Tipo AND p.ativo = 1";
+        private static string SqlPorTipo => SqlBase + " WHERE p.tipo = @Tipo";
 
         private static Produtos MapearProduto(Produtos produto, Categorias categoria, UnidadesMedida unidade)
         {
@@ -49,26 +56,41 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             return produto;
         }
 
-        public async Task<List<Produtos>> ListarTudoAsync()
+        public async Task<List<Produtos>> ListarAsync(FiltroProdutosDto filtro)
         {
-            using var conexao = new MySqlConnection(_stringConexao);
-            var resultado = await conexao.QueryAsync<Produtos, Categorias, UnidadesMedida, Produtos>(
-                SqlBase,
-                MapearProduto,
-                splitOn: "id,id"
-            );
-            return resultado.ToList();
-        }
+            var where = new List<string>();
+            var param = new DynamicParameters();
 
-        public async Task<List<Produtos>> ListarPorTipoAsync(string tipo)
-        {
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("p.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("p.ativo = FALSE");
+
+            if (filtro.TipoFiltro != "todos")
+            {
+                where.Add("p.tipo = @Tipo");
+                param.Add("Tipo", filtro.TipoFiltro);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add(@"(p.produto     LIKE @Busca
+                  OR p.referencia  LIKE @Busca
+                  OR c.categoria   LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY p.produto";
+
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Produtos, Categorias, UnidadesMedida, Produtos>(
-                SqlPorTipo,
-                MapearProduto,
-                splitOn: "id,id",
-                param: new { Tipo = tipo }
-            );
+                sql, MapearProduto,
+                splitOn: "CategoriaId,UnidadeId",
+                param: param);
             return resultado.ToList();
         }
 
@@ -76,11 +98,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Produtos, Categorias, UnidadesMedida, Produtos>(
-                SqlPesquisar,
-                MapearProduto,
-                splitOn: "id,id",
-                param: new { Id = id }
-            );
+                SqlPesquisar, MapearProduto, splitOn: "CategoriaId,UnidadeId", param: new { Id = id });
             return resultado.FirstOrDefault();
         }
 
@@ -88,13 +106,17 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO produtos
-                           (produto, tipo, id_categoria, id_unidade_medida,
-                            ncm, cest, origem, observacao, data_criacao,
-                            data_ultima_alteracao, id_usuario_ultima_alteracao, ativo)
+                           (produto, referencia, saldo, preco_custo, preco_venda,
+                            estoque_minimo, valor_ultima_compra, tipo,
+                            id_categoria, id_unidade_medida, ncm, cest, origem,
+                            observacao, data_criacao, data_ultima_alteracao,
+                            id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Produto, @Tipo, @IdCategoria, @IdUnidadeMedida,
-                            @Ncm, @Cest, @Origem, @Observacao, @DataCriacao,
-                            @DataUltimaAlteracao, @IdUsuarioUltimaAlteracao, @Ativo);
+                           (@Produto, @Referencia, @Saldo, @PrecoCusto, @PrecoVenda,
+                            @EstoqueMinimo, @ValorUltimaCompra, @Tipo,
+                            @IdCategoria, @IdUnidadeMedida, @Ncm, @Cest, @Origem,
+                            @Observacao, @DataCriacao, @DataUltimaAlteracao,
+                            @IdUsuarioUltimaAlteracao, @Ativo);
                            SELECT LAST_INSERT_ID();";
             return await conexao.ExecuteScalarAsync<int>(sql, entity);
         }
@@ -104,6 +126,12 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"UPDATE produtos SET
                            produto                       = @Produto,
+                           referencia                    = @Referencia,
+                           saldo                         = @Saldo,
+                           preco_custo                   = @PrecoCusto,
+                           preco_venda                   = @PrecoVenda,
+                           estoque_minimo                = @EstoqueMinimo,
+                           valor_ultima_compra           = @ValorUltimaCompra,
                            tipo                          = @Tipo,
                            id_categoria                  = @IdCategoria,
                            id_unidade_medida             = @IdUnidadeMedida,
@@ -144,10 +172,8 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         public async Task<bool> ExisteProdutoCadastradoAsync(string produto, int ignorarId = 0)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"SELECT COUNT(1) FROM produtos
-                           WHERE produto = @Produto AND id != @Id";
-            var qtde = await conexao.ExecuteScalarAsync<int>(sql,
-                new { Produto = produto, Id = ignorarId });
+            string sql = "SELECT COUNT(1) FROM produtos WHERE produto = @Produto AND id != @IgnorarId";
+            var qtde = await conexao.ExecuteScalarAsync<int>(sql, new { Produto = produto, IgnorarId = ignorarId });
             return qtde > 0;
         }
     }

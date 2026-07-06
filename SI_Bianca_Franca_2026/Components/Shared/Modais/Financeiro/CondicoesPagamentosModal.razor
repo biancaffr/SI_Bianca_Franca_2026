@@ -1,0 +1,186 @@
+﻿@using SI_Bianca_Franca_2026.DTOs.Financeiro
+@using SI_Bianca_Franca_2026.Models.Financeiro
+@using SI_Bianca_Franca_2026.Models.Produto
+@using SI_Bianca_Franca_2026.Components.Shared
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto
+@using System.Globalization
+
+<Modal Visivel="_aberto"
+       Titulo="@(_dto.Id == 0 ? "Nova Condição de Pagamento" : "Editar Condição de Pagamento")"
+       Largura="900px"
+       AoFechar="Fechar">
+
+    @if (!string.IsNullOrEmpty(_erro))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@_erro
+        </div>
+    }
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+
+            @if (_dto.Id != 0)
+            {
+                <div class="form-group" style="width: 80px;">
+                    <label>Código</label>
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                </div>
+            }
+
+            <div class="form-group" style="flex: 1; min-width: 280px;">
+                <label class="obrigatorio">Condição de Pagamento</label>
+                <InputText class="form-control" @bind-Value="_dto.CondicaoPagamento" maxlength="50" />
+                <ValidationMessage For="@(() => _dto.CondicaoPagamento)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="width: 110px;">
+                <label>Multa (%)</label>
+                <input class="form-control" type="text" maxlength="6"
+                       value="@_dto.MultaPercentual.ToString(_ptBR)"
+                       @onchange="e => AtualizarDecimal(e, v => _dto.MultaPercentual = v)" />
+                <ValidationMessage For="@(() => _dto.MultaPercentual)" class="text-danger" />
+            </div>
+            
+            <div class="form-group" style="width: 110px;">
+                <label>Juros (%)</label>
+                <input class="form-control" type="text" maxlength="6"
+                       value="@_dto.TaxaJurosPercentual.ToString(_ptBR)"
+                       @onchange="e => AtualizarDecimal(e, v => _dto.TaxaJurosPercentual = v)" />
+                <ValidationMessage For="@(() => _dto.TaxaJurosPercentual)" class="text-danger" />
+            </div>
+
+
+            <div class="form-group" style="width: 110px;">
+                <label>Desconto (%)</label>
+                <input class="form-control" type="text" maxlength="6"
+                       value="@_dto.DescontoPercentual.ToString(_ptBR)"
+                       @onchange="e => AtualizarDecimal(e, v => _dto.DescontoPercentual = v)" />
+                <ValidationMessage For="@(() => _dto.DescontoPercentual)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="width: 130px;">
+                <label>Qtd. Parcelas</label>
+                <input class="form-control" type="number" min="1" max="60"
+                       value="@_qtdParcelas"
+                       @onchange="e => AtualizarQtdParcelas(e)" />
+            </div>
+
+            @if (_dto.Id != 0)
+            {
+                <div class="form-group" style="width: 100px;">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        @if (_dto.Parcelas.Any())
+        {
+            <hr />
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Parcelas</strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        @onclick="AbrirModalNovoMetodo">
+                    <i class="bi bi-plus-lg me-1"></i>Nova Forma de Pagamento
+                </button>
+            </div>
+
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Nº</th>
+                        <th style="width: 140px;">Prazo (dias)</th>
+                        <th style="width: 140px;">Valor (%)</th>
+                        <th>Forma de Pagamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var parcela in _dto.Parcelas)
+                    {
+                        <tr>
+                            <td>@parcela.NumeroParcela</td>
+                            <td>
+                                <input class="form-control form-control-sm" type="number" min="0"
+                                       value="@parcela.PrazoDias"
+                                       @onchange="e => parcela.PrazoDias = int.TryParse(e.Value?.ToString(), out var r) ? r : 0" />
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" maxlength="7"
+                                       value="@parcela.Percentual.ToString(_ptBR)"
+                                       @onchange="e => AtualizarPercentualParcela(parcela, e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        value="@parcela.IdMetodoPagamento"
+                                        @onchange="e => parcela.IdMetodoPagamento = int.TryParse(e.Value?.ToString(), out var r) ? r : 0">
+                                    <option value="0">Selecione...</option>
+                                    @foreach (var m in _metodos)
+                                    {
+                                        <option value="@m.Id">@m.Metodo</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                        <td>
+                            <span class="badge @(Math.Abs(TotalPercentual - 100) <= 0.0001m ? "bg-success" : "bg-danger")"
+                                  style="font-size: 13px;">
+                                @TotalPercentual.ToString("0.####", _ptBR)%
+                            </span>
+                            @if (Math.Abs(TotalPercentual - 100) > 0.01m)
+                            {
+                                <div class="text-danger" style="font-size: 12px;">
+                                    @(TotalPercentual < 100
+                                        ? $"faltam {(100 - TotalPercentual).ToString("0.####", _ptBR)}%"
+                                        : $"excede em {(TotalPercentual - 100).ToString("0.####", _ptBR)}%")
+                                </div>
+                            }
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label>Data de Criação</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última Alteração</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Alterado por</label>
+                    <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+
+    </EditForm>
+</Modal>
+
+<MetodosPagamentoModal @ref="_modalMetodo" AoSalvarComSucesso="OnMetodoSalvo" />

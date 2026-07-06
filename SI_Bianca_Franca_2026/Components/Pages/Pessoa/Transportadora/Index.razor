@@ -9,8 +9,8 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
-    <select class="w-auto" @bind="filtroStatus">
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -20,11 +20,11 @@
     </button>
 </div>
 
-@if (transportadoras is null)
+@if (_transportadoras is null)
 {
     <p>Carregando...</p>
 }
-else if (!TransportadorasFiltrados.Any())
+else if (!_transportadoras.Any())
 {
     <p>Nenhuma transportadora encontrada.</p>
 }
@@ -36,6 +36,7 @@ else
                 <th>ID</th>
                 <th>Tipo</th>
                 <th>Nome / Razão Social</th>
+                <th>Cidade</th>
                 <th>CPF / CNPJ</th>
                 <th>RNTRC</th>
                 <th>Status</th>
@@ -43,12 +44,14 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var t in TransportadorasFiltrados)
+            @foreach (var t in _transportadoras)
             {
+                var idLocal = t.Id;
                 <tr>
                     <td>@t.Id</td>
                     <td>@(t.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
                     <td>@t.NomeRazaoSocial</td>
+                    <td>@($"{t.OCidade.Cidade} - {t.OCidade.OEstado?.Uf}")</td>
                     <td>@(t.CpfCnpj ?? "—")</td>
                     <td>@(t.Rntrc ?? "—")</td>
                     <td>
@@ -58,7 +61,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick="() => AbrirEdicao(t.Id)">
+                                @onclick="() => AbrirEdicao(idLocal)">
                             Editar
                         </button>
                     </td>

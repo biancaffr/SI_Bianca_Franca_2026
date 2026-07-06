@@ -33,14 +33,25 @@
                     </div>
                 }
 
-                <div class="form-group" style="width: 165px;">
-                    <label class="obrigatorio">Tipo</label>
-                    <InputSelect class="form-select" @bind-Value="_dto.TipoPessoa">
-                        <option value="FISICA">Pessoa Física</option>
-                        <option value="JURIDICA">Pessoa Jurídica</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => _dto.TipoPessoa)" class="text-danger" />
-                </div>
+                @if (_dto.Id == 0)
+                {
+                    <div class="form-group" style="width: 195px;">
+                        <label class="obrigatorio">Tipo</label>
+                        <InputSelect class="form-select" @bind-Value="_dto.TipoPessoa">
+                            <option value="FISICA">Pessoa Física</option>
+                            <option value="JURIDICA">Pessoa Jurídica</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _dto.TipoPessoa)" class="text-danger" />
+                    </div>
+                }
+                else
+                {
+                    <div class="form-group" style="width: 195px;">
+                        <label>Tipo</label>
+                        <input class="form-control" disabled
+                               value="@(_dto.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")" />
+                    </div>
+                }
 
                 <div class="form-group" style="flex: 1; min-width: 280px;">
                     <label class="obrigatorio">Emitente</label>
@@ -60,7 +71,7 @@
                     <InputText class="form-control" @bind-Value="_dto.Cep" maxlength="9" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 300px;">
+                <div class="form-group" style="flex: 1; min-width: 350px;">
                     <label>Logradouro</label>
                     <InputText class="form-control" @bind-Value="_dto.Logradouro" maxlength="50" />
                 </div>
@@ -70,7 +81,7 @@
                     <InputText class="form-control" @bind-Value="_dto.Numero" maxlength="5" />
                 </div>
 
-                <div class="form-group" style="flex: 1; min-width: 300px;">
+                <div class="form-group" style="flex: 1; min-width: 350px;">
                     <label>Bairro</label>
                     <InputText class="form-control" @bind-Value="_dto.Bairro" maxlength="50" />
                 </div>
@@ -81,50 +92,13 @@
                 </div>
 
                 <div class="form-group" style="flex: 1; min-width: 300px;">
-                    <label class="obrigatorio">País</label>
-                    <div class="input-group">
-                        <InputSelect class="form-select" @bind-Value="_dto.IdPais"
-                                     @bind-Value:after="AoMudarPaisAsync">
-                            <option value="0">Selecione...</option>
-                            @foreach (var p in _paises)
-                            {
-                                <option value="@p.Id.ToString()">@p.Pais</option>
-                            }
-                        </InputSelect>
-                        <button type="button" class="btn btn-outline-secondary"
-                                title="Novo país" @onclick="AbrirModalNovoPais">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                    <ValidationMessage For="@(() => _dto.IdPais)" class="text-danger" />
-                </div>
-
-                <div class="form-group" style="flex: 1; min-width: 300px;">
-                    <label>Estado</label>
-                    <div class="input-group">
-                        <InputSelect class="form-select" @bind-Value="_idEstadoSelecionado"
-                                     @bind-Value:after="AoMudarEstadoAsync">
-                            <option value="0">Selecione...</option>
-                            @foreach (var e in _estadosFiltrados)
-                            {
-                                <option value="@e.Id.ToString()">@e.Estado (@e.Uf)</option>
-                            }
-                        </InputSelect>
-                        <button type="button" class="btn btn-outline-secondary"
-                                title="Novo estado" @onclick="AbrirModalNovoEstado">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group" style="flex: 1; min-width: 300px;">
-                    <label>Cidade</label>
+                    <label class="obrigatorio">Cidade</label>
                     <div class="input-group">
                         <InputSelect class="form-select" @bind-Value="_dto.IdCidade">
                             <option value="0">Selecione...</option>
-                            @foreach (var c in _cidadesFiltradas)
+                            @foreach (var c in _cidades)
                             {
-                                <option value="@c.Id.ToString()">@c.Cidade</option>
+                                <option value="@c.Id.ToString()">@FormatarCidade(c)</option>
                             }
                         </InputSelect>
                         <button type="button" class="btn btn-outline-secondary"
@@ -132,6 +106,7 @@
                             <i class="bi bi-plus"></i>
                         </button>
                     </div>
+                    <ValidationMessage For="@(() => _dto.IdCidade)" class="text-danger" />
                 </div>
 
                 <div class="form-group" style="width: 100%;"><hr class="my-1" /></div>
@@ -176,14 +151,16 @@
                     </InputSelect>
                 </div>
 
-                <div class="form-group" style="width: 100px;">
-                    <label>Status</label>
-                    <div class="form-check form-switch mt-1">
-                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
-                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                @if (_dto.Id != 0)
+                {
+                    <div class="form-group" style="width: 100px;">
+                        <label>Status</label>
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                            <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                        </div>
                     </div>
-                </div>
-
+                }
             </div>
 
             <div class="card mb-3 mt-2">
@@ -223,7 +200,4 @@
     }
 </Modal>
 
-<PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvoAsync" />
-<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvoAsync" />
 <CidadesModal @ref="_modalCidade" AoSalvarComSucesso="OnCidadeSalvaAsync" />
-

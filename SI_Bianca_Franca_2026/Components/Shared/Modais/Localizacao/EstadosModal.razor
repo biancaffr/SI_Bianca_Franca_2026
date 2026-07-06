@@ -13,30 +13,27 @@
         <DataAnnotationsValidator />
 
         <div style="display: grid; grid-template-columns: 80px 1fr; gap: 20px;">
-            <div class="form-group" style="width: 100px;">
-                <label>Código</label>
-                @if (_dto.Id == 0)
-                {
-                    <input type="text" class="form-control" disabled placeholder="Novo" />
-                }
-                else
-                {
+            @if (_dto.Id != 0)
+            {
+                <div class="form-group" style="width: 80px;">
+                    <label>Código</label>
                     <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
-                }
-            </div>
-            <div class="form-group" style="justify-self: end;">
-                <label>Status</label>
-                <div class="form-check form-switch mt-1">
-                    <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
-                    <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
                 </div>
-            </div>
+
+                <div class="form-group" style="justify-self: end;">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="form-group col-full">
             <label class="obrigatorio">País Pertencente</label>
             <div class="input-group">
-                <InputSelect class="form-control" @bind-Value="_dto.IdPais">
+                <InputSelect class="form-select" @bind-Value="_dto.IdPais">
                     <option value="0">Selecione...</option>
                     @foreach (var pais in _paises)
                     {

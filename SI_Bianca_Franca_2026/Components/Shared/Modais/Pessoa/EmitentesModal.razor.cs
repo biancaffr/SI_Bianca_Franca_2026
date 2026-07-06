@@ -28,10 +28,7 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
     {
         _erro = string.Empty;
         _dto = new EmitentesDTO { Ativo = true };
-        _idEstadoSelecionado = 0;
-        _estadosFiltrados = new();
-        _cidadesFiltradas = new();
-        await CarregarPaisesAsync();
+        await CarregarCidadesAsync();
         _aberto = true;
         StateHasChanged();
     }
@@ -42,8 +39,6 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
         _carregando = true;
         _aberto = true;
         StateHasChanged();
-
-        await CarregarPaisesAsync();
 
         var emitente = await EmitentesService.Pesquisar(id);
         if (emitente is null) { _aberto = false; StateHasChanged(); return; }
@@ -56,7 +51,6 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
             CpfCnpj = emitente.CpfCnpj,
             RgIe = emitente.RgIe,
             ApelidoNomeFantasia = emitente.ApelidoNomeFantasia,
-            IdPais = emitente.IdPais,
             IdCidade = emitente.IdCidade,
             Bairro = emitente.Bairro,
             Logradouro = emitente.Logradouro,
@@ -74,7 +68,7 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
             NomeUsuarioAlteracao = emitente.NomeUsuarioAlteracao
         };
 
-        await CarregarLocalizacaoDoRegistroAsync();
+        await CarregarCidadesAsync();
 
         _carregando = false;
         StateHasChanged();
@@ -109,8 +103,7 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
         CpfCnpj = _dto.CpfCnpj != null ? new string(_dto.CpfCnpj.Where(char.IsDigit).ToArray()) : null,
         RgIe = _dto.RgIe,
         ApelidoNomeFantasia = _dto.ApelidoNomeFantasia,
-        IdPais = _dto.IdPais,
-        IdCidade = _dto.IdCidade == 0 ? null : _dto.IdCidade,
+        IdCidade = _dto.IdCidade,
         Bairro = _dto.Bairro,
         Logradouro = _dto.Logradouro,
         Numero = _dto.Numero,

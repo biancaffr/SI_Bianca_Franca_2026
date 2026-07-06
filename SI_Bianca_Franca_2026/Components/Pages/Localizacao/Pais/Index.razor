@@ -9,9 +9,9 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
 
-    <select class="w-auto" @bind="filtroStatus">
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -22,11 +22,11 @@
     </button>
 </div>
 
-@if (paises is null)
+@if (_paises is null)
 {
     <p>Carregando...</p>
 }
-else if (!PaisesFiltrados.Any())
+else if (!_paises.Any())
 {
     <p>Nenhum país encontrado.</p>
 }
@@ -45,8 +45,9 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var pais in PaisesFiltrados)
+            @foreach (var pais in _paises)
             {
+                var idLocal = pais.Id;
                 <tr>
                     <td>@pais.Id</td>
                     <td>@pais.Pais</td>

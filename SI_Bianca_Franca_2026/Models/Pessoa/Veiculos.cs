@@ -13,8 +13,6 @@ namespace SI_Bianca_Franca_2026.Models.Pessoa
         public string? TipoVeiculo { get; set; }
         public string? MarcaModelo { get; set; }
         public string? Observacao { get; set; }
-        public string NomeUsuarioAlteracao { get; set; } = string.Empty;
-
         public Transportadoras? OTransportadora { get; set; }
         public Estados? OEstado { get; set; }
     }

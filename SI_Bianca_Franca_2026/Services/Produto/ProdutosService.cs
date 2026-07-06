@@ -1,4 +1,6 @@
-﻿using SI_Bianca_Franca_2026.Models.Produto;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Pessoa;
+using SI_Bianca_Franca_2026.Models.Produto;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,17 +17,16 @@ namespace SI_Bianca_Franca_2026.Services.Produto
             _repository = repository;
         }
 
-        public async Task<List<Produtos>> ListarTudo()
-            => await _repository.ListarTudoAsync();
-
-        public async Task<List<Produtos>> ListarPorTipo(string tipo)
-            => await _repository.ListarPorTipoAsync(tipo);
+        public async Task<List<Produtos>> ListarTudo(FiltroProdutosDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Produtos?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task<int> Inserir(Produtos entity)
         {
+            NormalizarTextos(entity);
+
             bool produtoExiste = await _repository.ExisteProdutoCadastradoAsync(entity.Produto);
             if (produtoExiste)
                 throw new Exception("Já existe um produto cadastrado com este nome.");
@@ -36,6 +37,8 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Atualizar(Produtos entity)
         {
+            NormalizarTextos(entity);
+
             bool produtoExiste = await _repository.ExisteProdutoCadastradoAsync(entity.Produto, entity.Id);
             if (produtoExiste)
                 throw new Exception("Já existe outro produto cadastrado com este nome.");
@@ -52,5 +55,14 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Produtos e)
+        {
+            e.Produto = e.Produto.Trim().ToUpperInvariant();
+            e.Referencia = e.Referencia?.Trim().ToUpperInvariant();
+            e.Ncm = e.Ncm?.Trim();
+            e.Cest = e.Cest?.Trim();
+            e.Observacao = e.Observacao?.Trim().ToUpperInvariant();
+        }
     }
 }

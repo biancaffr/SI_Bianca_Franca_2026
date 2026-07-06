@@ -1,30 +1,38 @@
 using Microsoft.AspNetCore.Components;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.Pessoa;
+using SI_Bianca_Franca_2026.Models.Financeiro;
 using SI_Bianca_Franca_2026.Models.Pessoa;
+using SI_Bianca_Franca_2026.Services.Financeiro;
 using SI_Bianca_Franca_2026.Services.Pessoa;
+using System.Globalization;
 
 namespace SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa;
 
 public partial class ClientesModal : PessoaModalBase<ClientesDTO>
 {
     [Inject] private ClientesService ClientesService { get; set; } = default!;
+    [Inject] private CondicoesPagamentosService CondicoesPagamentosService { get; set; } = default!;
 
     [Parameter] public EventCallback<Clientes> AoSalvarComSucesso { get; set; }
 
     private bool _aberto = false;
     private bool _carregando = false;
     private string _erro = string.Empty;
+    private List<CondicoesPagamentos> _condicoesPagamento = new();
 
     private string LimiteCreditoTexto
     {
-        get => _dto.LimiteCredito == 0 ? string.Empty : _dto.LimiteCredito.ToString("N2");
+        get => _dto.LimiteCredito == 0
+            ? string.Empty
+            : _dto.LimiteCredito.ToString("0.##", CultureInfo.GetCultureInfo("pt-BR"));
         set
         {
             if (string.IsNullOrWhiteSpace(value))
                 _dto.LimiteCredito = 0;
-            else if (decimal.TryParse(value, System.Globalization.NumberStyles.Any,
-                     System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out var resultado))
-                _dto.LimiteCredito = resultado;
+            else if (decimal.TryParse(value, NumberStyles.Any,
+                     CultureInfo.GetCultureInfo("pt-BR"), out var r))
+                _dto.LimiteCredito = r;
         }
     }
 
@@ -32,10 +40,8 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
     {
         _erro = string.Empty;
         _dto = new ClientesDTO { Ativo = true };
-        _idEstadoSelecionado = 0;
-        _estadosFiltrados = new();
-        _cidadesFiltradas = new();
-        await CarregarPaisesAsync();
+        await CarregarCidadesAsync();
+        await CarregarCondicoesAsync();
         _aberto = true;
         StateHasChanged();
     }
@@ -46,8 +52,6 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
         _carregando = true;
         _aberto = true;
         StateHasChanged();
-
-        await CarregarPaisesAsync();
 
         var cliente = await ClientesService.Pesquisar(id);
         if (cliente is null)
@@ -65,7 +69,6 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
             CpfCnpj = cliente.CpfCnpj,
             RgIe = cliente.RgIe,
             ApelidoNomeFantasia = cliente.ApelidoNomeFantasia,
-            IdPais = cliente.IdPais,
             IdCidade = cliente.IdCidade,
             Bairro = cliente.Bairro,
             Logradouro = cliente.Logradouro,
@@ -75,6 +78,7 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
             Telefone = cliente.Telefone,
             Email = cliente.Email,
             LimiteCredito = cliente.LimiteCredito,
+            IdCondicaoPagamento = cliente.IdCondicaoPagamento,
             Observacao = cliente.Observacao,
             Ativo = cliente.Ativo,
             DataCriacao = cliente.DataCriacao,
@@ -82,12 +86,17 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
             NomeUsuarioAlteracao = cliente.NomeUsuarioAlteracao
         };
 
-        await CarregarLocalizacaoDoRegistroAsync();
+        await CarregarCidadesAsync();
+        await CarregarCondicoesAsync();
 
         _carregando = false;
         StateHasChanged();
     }
-
+    private async Task CarregarCondicoesAsync()
+    {
+        var todas = await CondicoesPagamentosService.ListarTudo(new FiltroBaseDto { StatusFiltro = "ativo" });
+        _condicoesPagamento = todas.ToList();
+    }
     private void Fechar()
     {
         _aberto = false;
@@ -132,8 +141,7 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
             : null,
         RgIe = _dto.RgIe,
         ApelidoNomeFantasia = _dto.ApelidoNomeFantasia,
-        IdPais = _dto.IdPais,
-        IdCidade = _dto.IdCidade == 0 ? null : _dto.IdCidade,
+        IdCidade = _dto.IdCidade,
         Bairro = _dto.Bairro,
         Logradouro = _dto.Logradouro,
         Numero = _dto.Numero,
@@ -142,6 +150,7 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
         Telefone = _dto.Telefone,
         Email = _dto.Email,
         LimiteCredito = _dto.LimiteCredito,
+        IdCondicaoPagamento = _dto.IdCondicaoPagamento,
         Observacao = _dto.Observacao,
         Ativo = _dto.Ativo,
         DataCriacao = _dto.DataCriacao

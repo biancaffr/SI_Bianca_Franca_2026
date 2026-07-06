@@ -1,0 +1,75 @@
+﻿@page "/condicoes-pagamento"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro
+
+<div class="mb-3">
+    <h3 class="mb-0">Condições de Pagamento</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
+
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
+        <option value="ativo">Ativos</option>
+        <option value="inativo">Inativos</option>
+        <option value="todos">Todos</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirCadastro">
+        <i class="bi bi-plus-lg me-1"></i>Nova Condição
+    </button>
+</div>
+
+@if (_condicoes is null)
+{
+    <p>Carregando...</p>
+}
+else if (!_condicoes.Any())
+{
+    <p>Nenhuma condição de pagamento encontrada.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Condição de Pagamento</th>
+                <th>Parcelas</th>
+                <th>Desconto (%)</th>
+                <th>Juros (%)</th>
+                <th>Multa (%)</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in _condicoes)
+            {
+                var idLocal = c.Id;
+                <tr>
+                    <td>@c.Id</td>
+                    <td>@c.CondicaoPagamento</td>
+                    <td>@c.Parcelas.Count</td>
+                    <td>@c.DescontoPercentual.ToString("0.##", _ptBR)%</td>
+                    <td>@c.TaxaJurosPercentual.ToString("0.##", _ptBR)%</td>
+                    <td>@c.MultaPercentual.ToString("0.##", _ptBR)%</td>
+                    <td>
+                        <span class="badge @(c.Ativo ? "bg-success" : "bg-danger")">
+                            @(c.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirEdicao(idLocal)">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<CondicoesPagamentosModal @ref="_modal" AoSalvarComSucesso="OnSalvo" />

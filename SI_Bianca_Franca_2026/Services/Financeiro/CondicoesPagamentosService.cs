@@ -1,4 +1,6 @@
-﻿using SI_Bianca_Franca_2026.Models.Financeiro;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Financeiro;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Financeiro;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,16 +17,18 @@ namespace SI_Bianca_Franca_2026.Services.Financeiro
             _repository = repository;
         }
 
-        public async Task<List<CondicoesPagamentos>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<CondicoesPagamentos>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<CondicoesPagamentos?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(CondicoesPagamentos entity, List<CondicoesPagamentosParcelas> parcelas)
         {
-            bool descricaoExiste = await _repository.ExisteDescricaoCadastradaAsync(entity.Descricao);
-            if (descricaoExiste)
+            NormalizarTextos(entity);
+
+            bool existe = await _repository.ExisteCondicaoCadastradaAsync(entity.CondicaoPagamento);
+            if (existe)
                 throw new Exception("Já existe uma condição de pagamento cadastrada com esta descrição.");
 
             ValidarParcelas(parcelas);
@@ -38,8 +42,10 @@ namespace SI_Bianca_Franca_2026.Services.Financeiro
 
         public async Task Atualizar(CondicoesPagamentos entity, List<CondicoesPagamentosParcelas> parcelas)
         {
-            bool descricaoExiste = await _repository.ExisteDescricaoCadastradaAsync(entity.Descricao, entity.Id);
-            if (descricaoExiste)
+            NormalizarTextos(entity);
+
+            bool existe = await _repository.ExisteCondicaoCadastradaAsync(entity.CondicaoPagamento, entity.Id);
+            if (existe)
                 throw new Exception("Já existe outra condição de pagamento cadastrada com esta descrição.");
 
             ValidarParcelas(parcelas);
@@ -61,14 +67,19 @@ namespace SI_Bianca_Franca_2026.Services.Financeiro
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
 
-        private void ValidarParcelas(List<CondicoesPagamentosParcelas> parcelas)
+        private static void NormalizarTextos(CondicoesPagamentos e)
+        {
+            e.CondicaoPagamento = e.CondicaoPagamento.Trim().ToUpperInvariant();
+        }
+
+        private static void ValidarParcelas(List<CondicoesPagamentosParcelas> parcelas)
         {
             if (!parcelas.Any())
                 throw new Exception("A condição de pagamento deve ter ao menos uma parcela.");
 
-            var totalPercentual = parcelas.Sum(p => p.Percentual);
-            if (Math.Abs(totalPercentual - 100) > 0.01m)
-                throw new Exception($"A soma dos percentuais das parcelas deve totalizar 100%. Total atual: {totalPercentual:N4}%");
+            var total = parcelas.Sum(p => p.Percentual);
+            if (Math.Abs(total - 100) > 0.01m)
+                throw new Exception($"A soma dos percentuais deve totalizar 100%. Total atual: {total:N2}%");
         }
 
         private void PreencherInsercaoParcelas(List<CondicoesPagamentosParcelas> parcelas, int idCondicao)

@@ -1,5 +1,6 @@
-﻿using MySql.Data.MySqlClient;
-using Dapper;
+﻿using Dapper;
+using MySql.Data.MySqlClient;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Produto;
 
 namespace SI_Bianca_Franca_2026.Repositories.Produto
@@ -17,7 +18,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             SELECT
                 c.id,
                 c.categoria,
-                c.descricao,
                 c.data_criacao              AS DataCriacao,
                 c.data_ultima_alteracao     AS DataUltimaAlteracao,
                 c.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
@@ -28,10 +28,30 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
 
         private static string SqlPesquisar => SqlBase + " WHERE c.id = @Id";
 
-        public async Task<List<Categorias>> ListarTudoAsync()
+        public async Task<List<Categorias>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("c.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("c.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add("c.categoria LIKE @Busca");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY c.categoria";
+
             using var conexao = new MySqlConnection(_stringConexao);
-            return (await conexao.QueryAsync<Categorias>(SqlBase)).ToList();
+            return (await conexao.QueryAsync<Categorias>(sql, param)).ToList();
         }
 
         public async Task<Categorias?> PesquisarAsync(int id)
@@ -44,10 +64,10 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO categorias
-                           (categoria, descricao, data_criacao, data_ultima_alteracao,
+                           (categoria, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Categoria, @Descricao, @DataCriacao, @DataUltimaAlteracao,
+                           (@Categoria, @DataCriacao, @DataUltimaAlteracao,
                             @IdUsuarioUltimaAlteracao, @Ativo)";
             await conexao.ExecuteAsync(sql, entity);
         }
@@ -57,7 +77,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"UPDATE categorias SET
                            categoria                     = @Categoria,
-                           descricao                     = @Descricao,
                            data_ultima_alteracao         = @DataUltimaAlteracao,
                            id_usuario_ultima_alteracao   = @IdUsuarioUltimaAlteracao,
                            ativo                         = @Ativo

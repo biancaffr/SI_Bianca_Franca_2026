@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using MySql.Data.MySqlClient;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 
 namespace SI_Bianca_Franca_2026.Repositories.Localizacao
@@ -10,7 +11,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
 
         public CidadesRepository(IConfiguration configuration)
         {
-            _stringConexao = configuration.GetConnectionString("DefaultConnection");
+            _stringConexao = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private static string SqlBase => @"
@@ -25,15 +26,20 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
                 c.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
                 c.ativo,
                 u.nome                  AS NomeUsuarioAlteracao,
-                e.id,
+                e.id                    AS EstadoId,
                 e.estado,
                 e.uf,
-                e.id_pais               AS IdPais
+                e.id_pais               AS IdPais,
+                p.id                    AS PaisId,
+                p.pais,
+                p.sigla
             FROM cidades c
             INNER JOIN estados e ON c.id_estado = e.id
+            INNER JOIN paises p  ON e.id_pais = p.id
             LEFT JOIN usuarios u ON c.id_usuario_ultima_alteracao = u.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE c.id = @Id";
+
         private static string SqlListarPorEstado => @"
             SELECT
                 c.id,
@@ -49,20 +55,43 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             WHERE c.id_estado = @IdEstado AND c.ativo = 1
             ORDER BY c.cidade";
 
-        private static Cidades MapearCidade(Cidades cidade, Estados estado)
+        private static Cidades MapearCidade(Cidades cidade, Estados estado, Paises pais)
         {
+            estado.OPais = pais;
             cidade.OEstado = estado;
             return cidade;
         }
 
-        public async Task<List<Cidades>> ListarTudoAsync()
+        public async Task<List<Cidades>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("c.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("c.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add(@"(c.cidade LIKE @Busca
+                          OR e.estado LIKE @Busca
+                          OR e.uf     LIKE @Busca
+                          OR p.pais   LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY e.estado, c.cidade";
+
             using var conexao = new MySqlConnection(_stringConexao);
-            var resultado = await conexao.QueryAsync<Cidades, Estados, Cidades>(
-                SqlBase,
-                MapearCidade,
-                splitOn: "id"
-            );
+            var resultado = await conexao.QueryAsync<Cidades, Estados, Paises, Cidades>(
+                sql, MapearCidade,
+                splitOn: "EstadoId,PaisId",
+                param: param);
             return resultado.ToList();
         }
 
@@ -71,20 +100,16 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<Cidades>(
                 SqlListarPorEstado,
-                new { IdEstado = idEstado },
-                commandType: System.Data.CommandType.Text
-            )).ToList();
+                new { IdEstado = idEstado })).ToList();
         }
 
         public async Task<Cidades?> PesquisarAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            var resultado = await conexao.QueryAsync<Cidades, Estados, Cidades>(
-                SqlPesquisar,
-                MapearCidade,
-                splitOn: "id",
-                param: new { Id = id }
-            );
+            var resultado = await conexao.QueryAsync<Cidades, Estados, Paises, Cidades>(
+                SqlPesquisar, MapearCidade,
+                splitOn: "EstadoId,PaisId",
+                param: new { Id = id });
             return resultado.FirstOrDefault();
         }
 
@@ -104,13 +129,13 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"UPDATE cidades SET
-                           cidade = @Cidade,
-                           id_estado = @IdEstado,
-                           codigo_ibge = @CodigoIbge,
-                           ddd = @Ddd,
-                           data_ultima_alteracao = @DataUltimaAlteracao,
-                           id_usuario_ultima_alteracao = @IdUsuarioUltimaAlteracao,
-                           ativo = @Ativo
+                           cidade                        = @Cidade,
+                           id_estado                     = @IdEstado,
+                           codigo_ibge                   = @CodigoIbge,
+                           ddd                           = @Ddd,
+                           data_ultima_alteracao         = @DataUltimaAlteracao,
+                           id_usuario_ultima_alteracao   = @IdUsuarioUltimaAlteracao,
+                           ativo                         = @Ativo
                            WHERE id = @Id";
             await conexao.ExecuteAsync(sql, entity);
         }
@@ -118,18 +143,12 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
         public async Task AlterarStatusAsync(int id, bool novoStatus, int idUsuario)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"UPDATE cidades SET
-                           ativo = @Ativo,
-                           data_ultima_alteracao = @DataUltimaAlteracao,
-                           id_usuario_ultima_alteracao = @IdUsuario
-                           WHERE id = @Id";
-            await conexao.ExecuteAsync(sql, new
-            {
-                Ativo = novoStatus,
-                DataUltimaAlteracao = DateTime.Now,
-                IdUsuario = idUsuario,
-                Id = id
-            });
+            await conexao.ExecuteAsync(@"UPDATE cidades SET
+                           ativo                         = @Ativo,
+                           data_ultima_alteracao         = @DataUltimaAlteracao,
+                           id_usuario_ultima_alteracao   = @IdUsuario
+                           WHERE id = @Id",
+                new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
         public async Task RemoverAsync(int id)
@@ -157,6 +176,5 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
                 new { CodigoIbge = codigoIbge, Id = ignorarId });
             return qtde > 0;
         }
-
     }
 }

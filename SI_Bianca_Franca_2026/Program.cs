@@ -1,11 +1,9 @@
 using SI_Bianca_Franca_2026.Components;
-using SI_Bianca_Franca_2026.Repositories.Comercial;
 using SI_Bianca_Franca_2026.Repositories.Financeiro;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
-using SI_Bianca_Franca_2026.Services.Comercial;
 using SI_Bianca_Franca_2026.Services.Financeiro;
 using SI_Bianca_Franca_2026.Services.Localizacao;
 using SI_Bianca_Franca_2026.Services.Pessoa;
@@ -51,9 +49,6 @@ builder.Services.AddScoped<CategoriasService>();
 builder.Services.AddScoped<UnidadesMedidaRepository>();
 builder.Services.AddScoped<UnidadesMedidaService>();
 
-builder.Services.AddScoped<SkuAtributosChavesRepository>();
-builder.Services.AddScoped<SkuAtributosChavesService>();
-
 builder.Services.AddScoped<MetodosPagamentoRepository>();
 builder.Services.AddScoped<MetodosPagamentoService>();
 
@@ -62,18 +57,6 @@ builder.Services.AddScoped<CondicoesPagamentosService>();
 
 builder.Services.AddScoped<ProdutosRepository>();
 builder.Services.AddScoped<ProdutosService>();
-
-builder.Services.AddScoped<SkusRepository>();
-builder.Services.AddScoped<SkusService>();
-
-builder.Services.AddScoped<SkusAtributosValoresRepository>();
-builder.Services.AddScoped<SkusAtributosValoresService>();
-
-builder.Services.AddScoped<FichasTecnicasRepository>();
-builder.Services.AddScoped<FichasTecnicasService>();
-
-builder.Services.AddScoped<PedidosRepository>();
-builder.Services.AddScoped<PedidosService>();
 
 var app = builder.Build();
 

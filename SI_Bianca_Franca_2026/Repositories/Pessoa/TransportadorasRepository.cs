@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using MySql.Data.MySqlClient;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Models.Pessoa;
 
@@ -11,7 +12,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
 
         public TransportadorasRepository(IConfiguration configuration)
         {
-            _stringConexao = configuration.GetConnectionString("DefaultConnection");
+            _stringConexao = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private static string SqlBase => @"
@@ -28,7 +29,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                 t.numero,
                 t.complemento,
                 t.cep,
-                t.id_pais                       AS IdPais,
                 t.telefone,
                 t.email,
                 t.rntrc,
@@ -38,46 +38,69 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                 t.id_usuario_ultima_alteracao   AS IdUsuarioUltimaAlteracao,
                 t.ativo,
                 u.nome                          AS NomeUsuarioAlteracao,
-                p.id,
-                p.pais,
-                p.sigla,
-                ci.id,
+                ci.id                           AS CidadeId,
                 ci.cidade,
-                ci.id_estado                    AS IdEstado
+                ci.id_estado                    AS IdEstado,
+                e.id                            AS EstadoId,
+                e.estado,
+                e.uf
             FROM transportadoras t
             LEFT JOIN usuarios u  ON t.id_usuario_ultima_alteracao = u.id
-            LEFT JOIN paises p    ON t.id_pais = p.id
-            LEFT JOIN cidades ci  ON t.id_cidade = ci.id";
+            LEFT JOIN cidades ci  ON t.id_cidade = ci.id
+            LEFT JOIN estados e   ON ci.id_estado = e.id";
 
         private static string SqlPesquisar => SqlBase + " WHERE t.id = @Id";
 
-        private static Transportadoras MapearTransportadora(Transportadoras transportadora, Paises pais, Cidades cidade)
+        private static Transportadoras MapearTransportadora(Transportadoras transportadora, Cidades cidade, Estados estado)
         {
-            transportadora.OPais = pais;
+            cidade.OEstado = estado;
             transportadora.OCidade = cidade;
             return transportadora;
         }
 
-        public async Task<List<Transportadoras>> ListarTudoAsync()
+        public async Task<List<Transportadoras>> ListarAsync(FiltroBaseDto filtro)
         {
+            var where = new List<string>();
+            var param = new DynamicParameters();
+
+            if (filtro.StatusFiltro == "ativo")
+                where.Add("t.ativo = TRUE");
+            else if (filtro.StatusFiltro == "inativo")
+                where.Add("t.ativo = FALSE");
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busca))
+            {
+                where.Add(@"(t.nome_razao_social      LIKE @Busca
+                          OR t.apelido_nome_fantasia  LIKE @Busca
+                          OR t.cpf_cnpj               LIKE @Busca
+                          OR t.telefone               LIKE @Busca
+                          OR t.rntrc                  LIKE @Busca
+                          OR ci.cidade                LIKE @Busca
+                          OR e.uf                     LIKE @Busca)");
+                param.Add("Busca", $"%{filtro.Busca}%");
+            }
+
+            var whereClause = where.Any()
+                ? "WHERE " + string.Join(" AND ", where)
+                : string.Empty;
+
+            var sql = $"{SqlBase} {whereClause} ORDER BY t.nome_razao_social";
+
             using var conexao = new MySqlConnection(_stringConexao);
-            var resultado = await conexao.QueryAsync<Transportadoras, Paises, Cidades, Transportadoras>(
-                SqlBase,
-                MapearTransportadora,
-                splitOn: "id,id"
-            );
+            var resultado = await conexao.QueryAsync<Transportadoras, Cidades, Estados, Transportadoras>(
+                sql, MapearTransportadora,
+                splitOn: "CidadeId,EstadoId",
+                param: param);
             return resultado.ToList();
         }
 
         public async Task<Transportadoras?> PesquisarAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            var resultado = await conexao.QueryAsync<Transportadoras, Paises, Cidades, Transportadoras>(
-                SqlPesquisar,
-                MapearTransportadora,
-                splitOn: "id,id",
-                param: new { Id = id }
-            );
+            var resultado = await conexao.QueryAsync<Transportadoras, Cidades, Estados, Transportadoras>(
+                SqlPesquisar, MapearTransportadora,
+                splitOn: "CidadeId,EstadoId",
+                param: new { Id = id });
             return resultado.FirstOrDefault();
         }
 
@@ -87,13 +110,13 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
             string sql = @"INSERT INTO transportadoras
                            (tipo_pessoa, nome_razao_social, cpf_cnpj, rg_ie,
                             apelido_nome_fantasia, id_cidade, bairro, logradouro,
-                            numero, complemento, cep, id_pais, telefone, email,
+                            numero, complemento, cep, telefone, email,
                             rntrc, observacao, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
                            VALUES
                            (@TipoPessoa, @NomeRazaoSocial, @CpfCnpj, @RgIe,
                             @ApelidoNomeFantasia, @IdCidade, @Bairro, @Logradouro,
-                            @Numero, @Complemento, @Cep, @IdPais, @Telefone, @Email,
+                            @Numero, @Complemento, @Cep, @Telefone, @Email,
                             @Rntrc, @Observacao, @DataCriacao, @DataUltimaAlteracao,
                             @IdUsuarioUltimaAlteracao, @Ativo)";
             await conexao.ExecuteAsync(sql, entity);
@@ -114,7 +137,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                            numero                        = @Numero,
                            complemento                   = @Complemento,
                            cep                           = @Cep,
-                           id_pais                       = @IdPais,
                            telefone                      = @Telefone,
                            email                         = @Email,
                            rntrc                         = @Rntrc,
@@ -129,33 +151,25 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
         public async Task AlterarStatusAsync(int id, bool novoStatus, int idUsuario)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"UPDATE transportadoras SET
+            await conexao.ExecuteAsync(@"UPDATE transportadoras SET
                            ativo                         = @Ativo,
                            data_ultima_alteracao         = @DataUltimaAlteracao,
                            id_usuario_ultima_alteracao   = @IdUsuario
-                           WHERE id = @Id";
-            await conexao.ExecuteAsync(sql, new
-            {
-                Ativo = novoStatus,
-                DataUltimaAlteracao = DateTime.Now,
-                IdUsuario = idUsuario,
-                Id = id
-            });
+                           WHERE id = @Id",
+                new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
         public async Task RemoverAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            await conexao.ExecuteAsync(
-                "DELETE FROM transportadoras WHERE id = @Id", new { Id = id });
+            await conexao.ExecuteAsync("DELETE FROM transportadoras WHERE id = @Id", new { Id = id });
         }
 
         public async Task<bool> ExisteCpfCnpjCadastradoAsync(string cpfCnpj, int ignorarId = 0)
         {
             using var conexao = new MySqlConnection(_stringConexao);
-            string sql = @"SELECT COUNT(1) FROM transportadoras
-                           WHERE cpf_cnpj = @CpfCnpj AND id != @Id";
-            var qtde = await conexao.ExecuteScalarAsync<int>(sql,
+            var qtde = await conexao.ExecuteScalarAsync<int>(
+                "SELECT COUNT(1) FROM transportadoras WHERE cpf_cnpj = @CpfCnpj AND id != @Id",
                 new { CpfCnpj = cpfCnpj, Id = ignorarId });
             return qtde > 0;
         }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
-using SI_Bianca_Franca_2026.Models.Localizacao;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.Localizacao;
+using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Services.Localizacao;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao;
 
@@ -10,38 +11,28 @@ public partial class Index
 {
     [Inject] private CidadesService CidadesService { get; set; } = default!;
 
-    private List<Cidades>? cidades;
-    private string filtroStatus = "ativo";
-    private string termoPesquisa = string.Empty;
+    private List<Cidades>? _cidades;
+    private FiltroBaseDto _filtro = new();
     private CidadesModal _modalCidade = default!;
-
-    private IEnumerable<Cidades> CidadesFiltradas =>
-        (cidades ?? [])
-        .Where(c => filtroStatus switch
-        {
-            "ativo" => c.Ativo,
-            "inativo" => !c.Ativo,
-            _ => true
-        })
-        .Where(c => string.IsNullOrWhiteSpace(termoPesquisa) ||
-                    c.Cidade.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    c.CodigoIbge.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    c.Ddd.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase) ||
-                    (c.OEstado != null && c.OEstado.Estado.Contains(termoPesquisa, StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
-        await CarregarDados();
+        await CarregarCidades();
     }
 
-    private async Task CarregarDados()
+    private async Task CarregarCidades()
     {
-        cidades = await CidadesService.ListarTudo();
+        _cidades = await CidadesService.ListarTudo(_filtro);
     }
 
-    private void AbrirCadastro() => _modalCidade.Abrir();
+    private async Task OnFiltroAlterado()
+    {
+        await CarregarCidades();
+    }
 
-    private void AbrirEdicao(Cidades cid) => _modalCidade.Abrir(new CidadesDTO
+    private async Task AbrirCadastro() => await _modalCidade.Abrir();
+
+    private async Task AbrirEdicao(Cidades cid) => await _modalCidade.Abrir(new CidadesDTO
     {
         Id = cid.Id,
         Cidade = cid.Cidade,
@@ -56,6 +47,6 @@ public partial class Index
 
     private async Task OnCidadeSalva(Cidades cidade)
     {
-        await CarregarDados();
+        await CarregarCidades();
     }
 }

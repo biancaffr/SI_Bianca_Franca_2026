@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Pessoa;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Pessoa;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,14 +16,16 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
             _repository = repository;
         }
 
-        public async Task<List<Transportadoras>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+        public async Task<List<Transportadoras>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<Transportadoras?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(Transportadoras entity)
         {
+            NormalizarTextos(entity);
+
             bool cpfCnpjExiste = await _repository.ExisteCpfCnpjCadastradoAsync(entity.CpfCnpj);
             if (cpfCnpjExiste)
                 throw new Exception("Já existe uma transportadora cadastrada com este CPF/CNPJ.");
@@ -33,6 +36,8 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
 
         public async Task Atualizar(Transportadoras entity)
         {
+            NormalizarTextos(entity);
+
             bool cpfCnpjExiste = await _repository.ExisteCpfCnpjCadastradoAsync(entity.CpfCnpj, entity.Id);
             if (cpfCnpjExiste)
                 throw new Exception("Já existe outra transportadora cadastrada com este CPF/CNPJ.");
@@ -49,5 +54,15 @@ namespace SI_Bianca_Franca_2026.Services.Pessoa
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(Transportadoras e)
+        {
+            e.NomeRazaoSocial = e.NomeRazaoSocial.Trim().ToUpperInvariant();
+            e.ApelidoNomeFantasia = e.ApelidoNomeFantasia?.Trim().ToUpperInvariant();
+            e.Bairro = e.Bairro?.Trim().ToUpperInvariant();
+            e.Logradouro = e.Logradouro?.Trim().ToUpperInvariant();
+            e.Complemento = e.Complemento?.Trim().ToUpperInvariant();
+            e.Observacao = e.Observacao?.Trim().ToUpperInvariant();
+        }
     }
 }

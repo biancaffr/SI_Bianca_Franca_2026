@@ -12,5 +12,9 @@ namespace SI_Bianca_Franca_2026.DTOs.Financeiro
 
         [Range(0, int.MaxValue, ErrorMessage = "Prazo não pode ser negativo")]
         public int PrazoDias { get; set; }
+
+        [Required(ErrorMessage = "Campo obrigatório")]
+        [Range(1, int.MaxValue, ErrorMessage = "Selecione uma forma de pagamento válida")]
+        public int IdMetodoPagamento { get; set; }
     }
 }

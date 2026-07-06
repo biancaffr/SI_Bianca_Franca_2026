@@ -9,15 +9,15 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
 
-    <select class="w-auto" @bind="filtroTipo">
+    <select class="w-auto" @bind="_filtro.TipoFiltro" @bind:after="OnFiltroAlterado">
         <option value="todos">Todos os tipos</option>
         <option value="PRODUTO_FINAL">Produto Final</option>
         <option value="MATERIA_PRIMA">Matéria-Prima</option>
     </select>
 
-    <select class="w-auto" @bind="filtroStatus">
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -28,11 +28,11 @@
     </button>
 </div>
 
-@if (produtos is null)
+@if (_produtos is null)
 {
     <p>Carregando...</p>
 }
-else if (!ProdutosFiltrados.Any())
+else if (!_produtos.Any())
 {
     <p>Nenhum produto encontrado.</p>
 }
@@ -42,27 +42,32 @@ else
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Produto</th>
                 <th>Tipo</th>
-                <th>Categoria</th>
+                <th>Produto</th>
                 <th>Unidade</th>
+                <th>Categoria</th>
+                <th>Saldo</th>
+                <th>Preço Venda</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var p in ProdutosFiltrados)
+            @foreach (var p in _produtos)
             {
+                var idLocal = p.Id;
                 <tr>
                     <td>@p.Id</td>
-                    <td>@p.Produto</td>
                     <td>
                         <span class="badge @(p.Tipo == "PRODUTO_FINAL" ? "bg-primary" : "bg-warning text-dark")">
                             @(p.Tipo == "PRODUTO_FINAL" ? "Produto Final" : "Matéria-Prima")
                         </span>
                     </td>
-                    <td>@(p.OCategoria?.Categoria ?? "—")</td>
+                    <td>@p.Produto</td>
                     <td>@(p.OUnidadeMedida?.Sigla ?? "—")</td>
+                    <td>@(p.OCategoria?.Categoria ?? "—")</td>
+                    <td>@p.Saldo.ToString("0.####")</td>
+                    <td>@(p.PrecoVenda?.ToString("C2") ?? "—")</td>
                     <td>
                         <span class="badge @(p.Ativo ? "bg-success" : "bg-danger")">
                             @(p.Ativo ? "Ativo" : "Inativo")
@@ -70,7 +75,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick="() => AbrirEdicao(p.Id)">
+                                @onclick="() => AbrirEdicao(idLocal)">
                             Editar
                         </button>
                     </td>
@@ -80,4 +85,4 @@ else
     </table>
 }
 
-<ProdutosModal @ref="_modalProduto" AoSalvarComSucesso="OnProdutoSalvo" />
+<ProdutosModal @ref="_modalProduto" AoSalvarComSucesso="OnProdutoSalvo" />

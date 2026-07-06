@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.Localizacao;
 using SI_Bianca_Franca_2026.Models.Localizacao;
 using SI_Bianca_Franca_2026.Services.Localizacao;
@@ -34,7 +35,7 @@ public partial class CidadesModal
 
     private async Task CarregarEstadosAsync()
     {
-        var todos = await EstadosService.ListarTudo();
+        var todos = await EstadosService.ListarTudo(new FiltroBaseDto { StatusFiltro = "todos" });
         _estados = todos.Where(e => e.Ativo || e.Id == _dto.IdEstado).ToList();
     }
 
@@ -44,15 +45,12 @@ public partial class CidadesModal
         StateHasChanged();
     }
 
-    private async Task AbrirModalEstado()
-    {
-        await _modalEstado.Abrir();
-    }
+    private async Task AbrirModalEstado() => await _modalEstado.Abrir();
 
     private async Task OnEstadoSalvo(Estados estado)
     {
-        var todos = await EstadosService.ListarTudo();
-        _estados = todos.Where(e => e.Ativo).ToList();
+        var todos = await EstadosService.ListarTudo(new FiltroBaseDto { StatusFiltro = "ativo" });
+        _estados = todos.ToList();
 
         var novo = _estados.FirstOrDefault(e => e.Uf == estado.Uf && e.IdPais == estado.IdPais);
         if (novo != null)

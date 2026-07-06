@@ -6,5 +6,6 @@ namespace SI_Bianca_Franca_2026.DTOs.Pessoa
     {
         [Range(0, double.MaxValue, ErrorMessage = "Limite de crédito não pode ser negativo")]
         public decimal LimiteCredito { get; set; } = 0;
+        public int? IdCondicaoPagamento { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using SI_Bianca_Franca_2026.Models.Produto;
+﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+using SI_Bianca_Franca_2026.Models.Produto;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Base;
@@ -15,14 +16,17 @@ namespace SI_Bianca_Franca_2026.Services.Produto
             _repository = repository;
         }
 
-        public async Task<List<UnidadesMedida>> ListarTudo()
-            => await _repository.ListarTudoAsync();
+      
+        public async Task<List<UnidadesMedida>> ListarTudo(FiltroBaseDto filtro)
+            => await _repository.ListarAsync(filtro);
 
         public async Task<UnidadesMedida?> Pesquisar(int id)
             => await _repository.PesquisarAsync(id);
 
         public async Task Inserir(UnidadesMedida entity)
         {
+            NormalizarTextos(entity);
+
             bool siglaExiste = await _repository.ExisteSiglaCadastradaAsync(entity.Sigla);
             if (siglaExiste)
                 throw new Exception("Já existe uma unidade de medida cadastrada com esta sigla.");
@@ -33,6 +37,8 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Atualizar(UnidadesMedida entity)
         {
+            NormalizarTextos(entity);
+
             bool siglaExiste = await _repository.ExisteSiglaCadastradaAsync(entity.Sigla, entity.Id);
             if (siglaExiste)
                 throw new Exception("Já existe outra unidade de medida cadastrada com esta sigla.");
@@ -49,5 +55,12 @@ namespace SI_Bianca_Franca_2026.Services.Produto
 
         public async Task Remover(int id)
             => await _repository.RemoverAsync(id);
+
+        private static void NormalizarTextos(UnidadesMedida e)
+        {
+            e.Sigla = e.Sigla.Trim().ToUpperInvariant();
+            e.UnidadeMedida = e.UnidadeMedida.Trim().ToUpperInvariant();
+            e.Categoria = e.Categoria.Trim().ToUpperInvariant();
+        }
     }
 }

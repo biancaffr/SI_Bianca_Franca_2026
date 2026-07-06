@@ -1,6 +1,5 @@
 @page "/clientes"
 @rendermode InteractiveServer
-@using SI_Bianca_Franca_2026.Models.Pessoa
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 
 <div class="mb-3">
@@ -9,9 +8,9 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
 
-    <select class="w-auto" @bind="filtroStatus">
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -22,11 +21,11 @@
     </button>
 </div>
 
-@if (clientes is null)
+@if (_clientes is null)
 {
     <p>Carregando...</p>
 }
-else if (!ClientesFiltrados.Any())
+else if (!_clientes.Any())
 {
     <p>Nenhum cliente encontrado.</p>
 }
@@ -38,23 +37,24 @@ else
                 <th>ID</th>
                 <th>Tipo</th>
                 <th>Nome / Razão Social</th>
+                <th>Cidade</th>
                 <th>CPF / CNPJ</th>
                 <th>Telefone</th>
-                <th>País</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var cli in ClientesFiltrados)
+            @foreach (var cli in _clientes)
             {
+                var idLocal = cli.Id;
                 <tr>
                     <td>@cli.Id</td>
                     <td>@(cli.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
                     <td>@cli.NomeRazaoSocial</td>
+                    <td>@($"{cli.OCidade.Cidade} - {cli.OCidade.OEstado?.Uf}")</td>
                     <td>@(cli.CpfCnpj ?? "—")</td>
                     <td>@(cli.Telefone ?? "—")</td>
-                    <td>@(cli.OPais?.Pais ?? "—")</td>
                     <td>
                         <span class="badge @(cli.Ativo ? "bg-success" : "bg-danger")">
                             @(cli.Ativo ? "Ativo" : "Inativo")
@@ -62,7 +62,7 @@ else
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @onclick="() => AbrirEdicao(cli.Id)">
+                                @onclick="() => AbrirEdicao(idLocal)">
                             Editar
                         </button>
                     </td>

@@ -13,6 +13,8 @@ main {
     border-right: 1px solid #e5e7eb;
 }
 
+
+
 @media (max-width: 969.98px) {
     .sidebar {
         background-color: #f8f9fa;

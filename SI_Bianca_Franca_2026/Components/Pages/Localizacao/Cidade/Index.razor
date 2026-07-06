@@ -9,9 +9,9 @@
 
 <div class="d-flex gap-2 mb-3">
     <input class="form-control" style="max-width: 300px;" placeholder="Pesquisar..."
-           @bind="termoPesquisa" @bind:event="oninput" />
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
 
-    <select class="w-auto" @bind="filtroStatus">
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
         <option value="ativo">Ativos</option>
         <option value="inativo">Inativos</option>
         <option value="todos">Todos</option>
@@ -22,11 +22,11 @@
     </button>
 </div>
 
-@if (cidades is null)
+@if (_cidades is null)
 {
     <p>Carregando...</p>
 }
-else if (!CidadesFiltradas.Any())
+else if (!_cidades.Any())
 {
     <p>Nenhuma cidade encontrada.</p>
 }
@@ -35,7 +35,7 @@ else
     <table class="table table-hover">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>ID</th>
                 <th>Cidade</th>
                 <th>Estado</th>
                 <th>DDD</th>
@@ -45,12 +45,12 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var cid in CidadesFiltradas)
+            @foreach (var cid in _cidades)
             {
                 <tr>
                     <td>@cid.Id</td>
                     <td>@cid.Cidade</td>
-                    <td>@(cid.OEstado != null ? $"{cid.OEstado.Estado} ({cid.OEstado.Uf})" : "Não informado")</td>
+                    <td>@(cid.OEstado != null ? $"{cid.OEstado.Estado} ({cid.OEstado.Uf})" : "—")</td>
                     <td>@cid.Ddd</td>
                     <td>@cid.CodigoIbge</td>
                     <td>

@@ -8,5 +8,8 @@ namespace SI_Bianca_Franca_2026.Models.Financeiro
         public int NumeroParcela { get; set; }
         public decimal Percentual { get; set; }
         public int PrazoDias { get; set; }
+        public int IdMetodoPagamento { get; set; }
+
+        public MetodosPagamento? OMetodoPagamento { get; set; }
     }
 }

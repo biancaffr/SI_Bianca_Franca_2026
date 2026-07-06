@@ -1,0 +1,80 @@
+﻿@using SI_Bianca_Franca_2026.DTOs.Financeiro
+@using SI_Bianca_Franca_2026.Models.Financeiro
+@using SI_Bianca_Franca_2026.Components.Shared
+
+<Modal Visivel="_aberto"
+       Titulo="@(_dto.Id == 0 ? "Novo Método de Pagamento" : "Editar Método de Pagamento")"
+       Largura="600px"
+       AoFechar="Fechar">
+
+    @if (!string.IsNullOrEmpty(_erro))
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @_erro
+        </div>
+    }
+
+    <EditForm Model="_dto" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+
+            @if (_dto.Id != 0)
+            {
+                <div class="form-group" style="width: 80px;">
+                    <label>Código</label>
+                    <InputNumber class="form-control" @bind-Value="_dto.Id" disabled />
+                </div>
+            }
+
+            <div class="form-group" style="width: 100px;">
+                <label class="obrigatorio">Sigla</label>
+                <InputText class="form-control" @bind-Value="_dto.Sigla" maxlength="5"/>
+                <ValidationMessage For="@(() => _dto.Sigla)" class="text-danger" />
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 250px;">
+                <label class="obrigatorio">Método</label>
+                <InputText class="form-control" @bind-Value="_dto.Metodo" maxlength="50"/>
+                <ValidationMessage For="@(() => _dto.Metodo)" class="text-danger" />
+            </div>
+
+            @if (_dto.Id != 0)
+            {
+                <div class="form-group" style="width: 100px;">
+                    <label>Status</label>
+                    <div class="form-check form-switch mt-1">
+                        <InputCheckbox class="form-check-input" @bind-Value="_dto.Ativo" />
+                        <label class="form-check-label">@(_dto.Ativo ? "Ativo" : "Inativo")</label>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (_dto.Id != 0)
+        {
+            <hr />
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label>Data de Criação</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataCriacao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Última Alteração</label>
+                    <input class="form-control" disabled
+                           value="@_dto.DataUltimaAlteracao.ToString("dd/MM/yyyy HH:mm:ss")" />
+                </div>
+                <div class="form-group">
+                    <label>Alterado por</label>
+                    <input class="form-control" disabled value="@_dto.NomeUsuarioAlteracao" />
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </EditForm>
+</Modal>
