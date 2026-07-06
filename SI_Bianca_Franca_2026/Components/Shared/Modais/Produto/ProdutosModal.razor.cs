@@ -244,6 +244,24 @@ public partial class ProdutosModal
         }
     }
 
+    private void AtualizarDecimal(ChangeEventArgs e, Action<decimal?> setter)
+    {
+        var texto = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(texto)) { setter(0); return; }
+        if (decimal.TryParse(texto, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out var r))
+            setter(r);
+    }
+
+    private void AtualizarDecimalNullable(ChangeEventArgs e, Action<decimal?> setter)
+    {
+        var texto = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(texto)) { setter(null); return; }
+        if (decimal.TryParse(texto, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out var r))
+            setter(r);
+    }
+
     private void AbrirModalNovaCategoria() => _modalCategoria.Abrir();
 
     private async Task OnCategoriaSalva(Categorias categoria)
