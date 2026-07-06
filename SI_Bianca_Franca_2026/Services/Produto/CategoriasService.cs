@@ -54,7 +54,12 @@ namespace SI_Bianca_Franca_2026.Services.Produto
             => await _repository.AlterarStatusAsync(id, true, _appContext.IdUsuarioAtual);
 
         public async Task Remover(int id)
-            => await _repository.RemoverAsync(id);
+        {
+            bool emUso = await _repository.EstaEmUsoAsync(id);
+            if (emUso)
+                throw new Exception("Esta categoria não pode ser excluída pois está em uso.");
+            await _repository.RemoverAsync(id);
+        }
 
         private static void NormalizarTextos(Categorias c)
         {

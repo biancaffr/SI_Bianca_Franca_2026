@@ -1,4 +1,4 @@
-﻿@using SI_Bianca_Franca_2026.DTOs.Financeiro
+@using SI_Bianca_Franca_2026.DTOs.Financeiro
 @using SI_Bianca_Franca_2026.Models.Financeiro
 @using SI_Bianca_Franca_2026.Models.Produto
 @using SI_Bianca_Franca_2026.Components.Shared
@@ -176,6 +176,13 @@
         }
 
         <div class="form-actions">
+            @if (_dto.Id != 0)
+            {
+                <button type="button" class="btn btn-outline-danger me-auto"
+                        @onclick="PedirConfirmacaoExclusao">
+                    <i class="bi bi-trash me-1"></i>Excluir
+                </button>
+            }
             <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
             <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
@@ -184,3 +191,4 @@
 </Modal>
 
 <MetodosPagamentoModal @ref="_modalMetodo" AoSalvarComSucesso="OnMetodoSalvo" />
+<ModalConfirmacao @ref="_modalConfirmacao" AoConfirmar="ConfirmarExclusao" />

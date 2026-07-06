@@ -1,4 +1,4 @@
-﻿@page "/estados"
+@page "/estados"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Localizacao
@@ -68,4 +68,4 @@ else
     </table>
 }
 
-<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" />
+<EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvo" AoExcluirComSucesso="CarregarEstados" />

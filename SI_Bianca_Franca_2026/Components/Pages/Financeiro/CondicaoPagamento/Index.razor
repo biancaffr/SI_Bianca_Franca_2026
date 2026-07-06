@@ -1,4 +1,4 @@
-﻿@page "/condicoes-pagamento"
+@page "/condicoes-pagamento"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro
 
@@ -72,4 +72,4 @@ else
     </table>
 }
 
-<CondicoesPagamentosModal @ref="_modal" AoSalvarComSucesso="OnSalvo" />
+<CondicoesPagamentosModal @ref="_modal" AoSalvarComSucesso="OnSalvo" AoExcluirComSucesso="CarregarDados" />

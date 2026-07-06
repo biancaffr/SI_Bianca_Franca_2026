@@ -14,6 +14,7 @@ public partial class ProdutosModal
     [Inject] private UnidadesMedidaService UnidadesMedidaService { get; set; } = default!;
 
     [Parameter] public EventCallback<Produtos> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
 
     private bool _aberto = false;
     private bool _carregando = false;
@@ -26,6 +27,7 @@ public partial class ProdutosModal
 
     private CategoriasModal _modalCategoria = default!;
     private UnidadesMedidaModal _modalUnidade = default!;
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public static Dictionary<byte, string> OrigensDisponiveis => new()
     {
@@ -242,24 +244,6 @@ public partial class ProdutosModal
         }
     }
 
-    private void AtualizarDecimal(ChangeEventArgs e, Action<decimal?> setter)
-    {
-        var texto = e.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(texto)) { setter(0); return; }
-        if (decimal.TryParse(texto, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out var r))
-            setter(r);
-    }
-
-    private void AtualizarDecimalNullable(ChangeEventArgs e, Action<decimal?> setter)
-    {
-        var texto = e.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(texto)) { setter(null); return; }
-        if (decimal.TryParse(texto, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out var r))
-            setter(r);
-    }
-
     private void AbrirModalNovaCategoria() => _modalCategoria.Abrir();
 
     private async Task OnCategoriaSalva(Categorias categoria)
@@ -273,5 +257,25 @@ public partial class ProdutosModal
     {
         _unidades = await UnidadesMedidaService.ListarTudo(new FiltroBaseDto { StatusFiltro = "ativo" });
         _dto.IdUnidadeMedida = unidade.Id;
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir o produto \"{_dto.Produto}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await ProdutosService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
     }
 }

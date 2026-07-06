@@ -81,6 +81,13 @@
         }
 
         <div class="form-actions">
+            @if (_dto.Id != 0)
+            {
+                <button type="button" class="btn btn-outline-danger me-auto"
+                        @onclick="PedirConfirmacaoExclusao">
+                    <i class="bi bi-trash me-1"></i>Excluir
+                </button>
+            }
             <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
             <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
@@ -88,3 +95,4 @@
 </Modal>
 
 <PaisesModal @ref="_modalPais" AoSalvarComSucesso="OnPaisSalvo" />
+<ModalConfirmacao @ref="_modalConfirmacao" AoConfirmar="ConfirmarExclusao" />

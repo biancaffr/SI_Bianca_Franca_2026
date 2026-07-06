@@ -12,12 +12,15 @@ public partial class EstadosModal
     [Inject] private EstadosService EstadosService { get; set; } = default!;
 
     [Parameter] public EventCallback<Estados> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
+
 
     private bool _aberto = false;
     private string _erro = string.Empty;
     private EstadosDTO _dto = new();
     private List<Paises> _paises = new();
     private PaisesModal _modalPais = default!;
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public async Task Abrir(EstadosDTO? dto = null, int idPaisPreSelecionado = 0)
     {
@@ -77,6 +80,26 @@ public partial class EstadosModal
                 await EstadosService.Atualizar(estado);
 
             await AoSalvarComSucesso.InvokeAsync(estado);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir o estado \"{_dto.Estado}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await EstadosService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

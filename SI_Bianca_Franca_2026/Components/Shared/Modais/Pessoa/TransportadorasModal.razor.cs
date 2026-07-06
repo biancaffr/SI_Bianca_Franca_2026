@@ -10,10 +10,14 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
     [Inject] private TransportadorasService TransportadorasService { get; set; } = default!;
 
     [Parameter] public EventCallback<Transportadoras> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
+
 
     private bool _aberto = false;
     private bool _carregando = false;
     private string _erro = string.Empty;
+
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public async Task AbrirNovo()
     {
@@ -83,6 +87,26 @@ public partial class TransportadorasModal : PessoaModalBase<TransportadorasDTO>
             Fechar();
         }
         catch (Exception ex) { _erro = ex.Message; }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir a transportadora \"{_dto.NomeRazaoSocial}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await TransportadorasService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
     }
 
     private Transportadoras MapearParaModel() => new()

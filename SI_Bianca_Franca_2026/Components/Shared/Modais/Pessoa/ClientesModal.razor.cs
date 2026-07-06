@@ -15,11 +15,15 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
     [Inject] private CondicoesPagamentosService CondicoesPagamentosService { get; set; } = default!;
 
     [Parameter] public EventCallback<Clientes> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
+
 
     private bool _aberto = false;
     private bool _carregando = false;
     private string _erro = string.Empty;
     private List<CondicoesPagamentos> _condicoesPagamento = new();
+    private ModalConfirmacao _modalConfirmacao = default!;
+
 
     private string LimiteCreditoTexto
     {
@@ -123,6 +127,26 @@ public partial class ClientesModal : PessoaModalBase<ClientesDTO>
                 await ClientesService.Atualizar(cliente);
 
             await AoSalvarComSucesso.InvokeAsync(cliente);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir o cliente \"{_dto.NomeRazaoSocial}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await ClientesService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

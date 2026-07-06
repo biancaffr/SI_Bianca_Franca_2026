@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.Localizacao;
 using SI_Bianca_Franca_2026.Models.Localizacao;
@@ -12,16 +13,20 @@ public partial class CidadesModal
     [Inject] private CidadesService CidadesService { get; set; } = default!;
 
     [Parameter] public EventCallback<Cidades> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback AoExcluirComSucesso { get; set; }
 
     private bool _aberto = false;
+    private bool _confirmandoExclusao = false;
     private string _erro = string.Empty;
     private CidadesDTO _dto = new();
     private List<Estados> _estados = new();
     private EstadosModal _modalEstado = default!;
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public async Task Abrir(CidadesDTO? dto = null, int idEstadoPreSelecionado = 0)
     {
         _erro = string.Empty;
+        _confirmandoExclusao = false;
         _dto = dto ?? new CidadesDTO
         {
             Ativo = true,
@@ -42,6 +47,7 @@ public partial class CidadesModal
     private void Fechar()
     {
         _aberto = false;
+        _confirmandoExclusao = false;
         StateHasChanged();
     }
 
@@ -80,6 +86,26 @@ public partial class CidadesModal
                 await CidadesService.Atualizar(cidade);
 
             await AoSalvarComSucesso.InvokeAsync(cidade);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir("Deseja realmente excluir a cidade \"" + _dto.Cidade + "\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await CidadesService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

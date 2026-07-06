@@ -16,6 +16,7 @@ public partial class VeiculosModal
     [Inject] private TransportadorasService TransportadorasService { get; set; } = default!;
 
     [Parameter] public EventCallback<Veiculos> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
 
     private bool _aberto = false;
     private bool _carregando = false;
@@ -24,6 +25,7 @@ public partial class VeiculosModal
     private List<Estados> _estados = new();
     private List<Transportadoras> _transportadoras = new();
     private EstadosModal _modalEstado = default!;
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public async Task Abrir(VeiculosDTO? dto = null)
     {
@@ -92,6 +94,26 @@ public partial class VeiculosModal
                 await VeiculosService.Atualizar(veiculo);
 
             await AoSalvarComSucesso.InvokeAsync(veiculo);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir o veículo com placa \"{_dto.Placa}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await VeiculosService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

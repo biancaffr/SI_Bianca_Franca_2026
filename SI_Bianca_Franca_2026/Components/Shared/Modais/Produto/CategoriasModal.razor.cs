@@ -10,10 +10,12 @@ public partial class CategoriasModal
     [Inject] private CategoriasService CategoriasService { get; set; } = default!;
 
     [Parameter] public EventCallback<Categorias> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
 
     private bool _aberto = false;
     private string _erro = string.Empty;
     private CategoriasDTO _dto = new();
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public void Abrir(CategoriasDTO? dto = null)
     {
@@ -47,6 +49,26 @@ public partial class CategoriasModal
                 await CategoriasService.Atualizar(categoria);
 
             await AoSalvarComSucesso.InvokeAsync(categoria);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir a categoria \"{_dto.Categoria}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await CategoriasService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

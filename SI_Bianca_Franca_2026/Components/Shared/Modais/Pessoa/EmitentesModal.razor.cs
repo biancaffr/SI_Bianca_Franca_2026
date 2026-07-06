@@ -10,10 +10,14 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
     [Inject] private EmitentesService EmitentesService { get; set; } = default!;
 
     [Parameter] public EventCallback<Emitentes> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
+
 
     private bool _aberto = false;
     private bool _carregando = false;
     private string _erro = string.Empty;
+
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     private static Dictionary<string, string> RegimesTributarios => new()
     {
@@ -95,6 +99,25 @@ public partial class EmitentesModal : PessoaModalBase<EmitentesDTO>
         catch (Exception ex) { _erro = ex.Message; }
     }
 
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir o emitente \"{_dto.NomeRazaoSocial}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await EmitentesService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
     private Emitentes MapearParaModel() => new()
     {
         Id = _dto.Id,

@@ -163,6 +163,24 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             });
         }
 
+        public async Task<bool> EstaEmUsoAsync(int id)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            string sql = @"SELECT COUNT(1) FROM (
+                    SELECT id_produto FROM pedidos_itens             WHERE id_produto = @Id
+                    UNION ALL
+                    SELECT id_produto FROM vendas_itens              WHERE id_produto = @Id
+                    UNION ALL
+                    SELECT id_produto FROM nfes_itens                WHERE id_produto = @Id
+                    UNION ALL
+                    SELECT id_produto FROM movimentacoes_estoque_itens WHERE id_produto = @Id
+                    UNION ALL
+                    SELECT id_produto FROM ordens_servico_itens      WHERE id_produto = @Id
+                ) AS referencias";
+            var qtde = await conexao.ExecuteScalarAsync<int>(sql, new { Id = id });
+            return qtde > 0;
+        }
+
         public async Task RemoverAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);

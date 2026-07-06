@@ -101,6 +101,14 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             });
         }
 
+        public async Task<bool> EstaEmUsoAsync(int id)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            string sql = @"SELECT COUNT(1) FROM produtos WHERE id_categoria = @Id";
+            var qtde = await conexao.ExecuteScalarAsync<int>(sql, new { Id = id });
+            return qtde > 0;
+        }
+
         public async Task RemoverAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);

@@ -13,6 +13,7 @@ public partial class CondicoesPagamentosModal
     [Inject] private MetodosPagamentoService MetodosPagamentoService { get; set; } = default!;
 
     [Parameter] public EventCallback<CondicoesPagamentos> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
 
 
 
@@ -22,6 +23,7 @@ public partial class CondicoesPagamentosModal
     private List<MetodosPagamento> _metodos = new();
     private int _qtdParcelas = 1;
     private MetodosPagamentoModal _modalMetodo = default!;
+    private ModalConfirmacao _modalConfirmacao = default!;
     private void AbrirModalNovoMetodo() => _modalMetodo.Abrir();
 
     private static readonly CultureInfo _ptBR = CultureInfo.GetCultureInfo("pt-BR");
@@ -206,6 +208,26 @@ public partial class CondicoesPagamentosModal
                 await CondicoesPagamentosService.Atualizar(condicao, parcelas);
 
             await AoSalvarComSucesso.InvokeAsync(condicao);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir a condição de pagamento \"{_dto.CondicaoPagamento}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await CondicoesPagamentosService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿@page "/metodos-pagamento"
+@page "/metodos-pagamento"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro
 
@@ -66,4 +66,4 @@ else
     </table>
 }
 
-<MetodosPagamentoModal @ref="_modalMetodo" AoSalvarComSucesso="OnMetodoSalvo" />
+<MetodosPagamentoModal @ref="_modalMetodo" AoSalvarComSucesso="OnMetodoSalvo" AoExcluirComSucesso="CarregarDados" />

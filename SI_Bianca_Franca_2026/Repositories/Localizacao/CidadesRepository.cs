@@ -151,6 +151,21 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
                 new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
+        public async Task<bool> EstaEmUsoAsync(int id)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            string sql = @"SELECT COUNT(1) FROM (
+                SELECT id_cidade FROM clientes       WHERE id_cidade = @Id
+                UNION ALL
+                SELECT id_cidade FROM emitentes      WHERE id_cidade = @Id
+                UNION ALL
+                SELECT id_cidade FROM fornecedores   WHERE id_cidade = @Id
+                UNION ALL
+                SELECT id_cidade FROM transportadoras WHERE id_cidade = @Id
+            ) AS referencias";
+            var qtde = await conexao.ExecuteScalarAsync<int>(sql, new { Id = id });
+            return qtde > 0;
+        }
         public async Task RemoverAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);

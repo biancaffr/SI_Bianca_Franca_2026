@@ -1,4 +1,4 @@
-﻿@using SI_Bianca_Franca_2026.DTOs.Pessoa
+@using SI_Bianca_Franca_2026.DTOs.Pessoa
 @using SI_Bianca_Franca_2026.Models.Pessoa
 @using SI_Bianca_Franca_2026.Models.Localizacao
 @using SI_Bianca_Franca_2026.Components.Shared
@@ -139,6 +139,13 @@
             }
 
             <div class="form-actions">
+                @if (_dto.Id != 0)
+                {
+                    <button type="button" class="btn btn-outline-danger me-auto"
+                            @onclick="PedirConfirmacaoExclusao">
+                        <i class="bi bi-trash me-1"></i>Excluir
+                    </button>
+                }
                 <button type="button" class="btn btn-secondary" @onclick="Fechar">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Salvar</button>
             </div>
@@ -147,3 +154,4 @@
 </Modal>
 
 <EstadosModal @ref="_modalEstado" AoSalvarComSucesso="OnEstadoSalvoAsync" />
+<ModalConfirmacao @ref="_modalConfirmacao" AoConfirmar="ConfirmarExclusao" />

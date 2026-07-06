@@ -1,4 +1,4 @@
-﻿@page "/unidades-medida"
+@page "/unidades-medida"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto
 
@@ -67,4 +67,4 @@ else
     </table>
 }
 
-<UnidadesMedidaModal @ref="_modalUnidade" AoSalvarComSucesso="OnUnidadeSalva" />
+<UnidadesMedidaModal @ref="_modalUnidade" AoSalvarComSucesso="OnUnidadeSalva" AoExcluirComSucesso="CarregarDados" />

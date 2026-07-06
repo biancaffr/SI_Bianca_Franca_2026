@@ -10,10 +10,12 @@ public partial class UnidadesMedidaModal
     [Inject] private UnidadesMedidaService UnidadesMedidaService { get; set; } = default!;
 
     [Parameter] public EventCallback<UnidadesMedida> AoSalvarComSucesso { get; set; }
+    [Parameter] public EventCallback<int> AoExcluirComSucesso { get; set; }
 
     private bool _aberto = false;
     private string _erro = string.Empty;
     private UnidadesMedidaDTO _dto = new();
+    private ModalConfirmacao _modalConfirmacao = default!;
 
     public void Abrir(UnidadesMedidaDTO? dto = null)
     {
@@ -49,6 +51,26 @@ public partial class UnidadesMedidaModal
                 await UnidadesMedidaService.Atualizar(unidade);
 
             await AoSalvarComSucesso.InvokeAsync(unidade);
+            Fechar();
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+    }
+
+    private void PedirConfirmacaoExclusao()
+    {
+        _modalConfirmacao.Abrir($"Deseja realmente excluir a unidade de medida \"{_dto.UnidadeMedida}\"?");
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        try
+        {
+            _erro = string.Empty;
+            await UnidadesMedidaService.Remover(_dto.Id);
+            await AoExcluirComSucesso.InvokeAsync(_dto.Id);
             Fechar();
         }
         catch (Exception ex)

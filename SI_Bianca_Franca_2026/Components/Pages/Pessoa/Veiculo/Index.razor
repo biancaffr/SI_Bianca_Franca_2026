@@ -1,4 +1,4 @@
-﻿@page "/veiculos"
+@page "/veiculos"
 @rendermode InteractiveServer
 @using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa
 
@@ -72,4 +72,4 @@ else
     </table>
 }
 
-<VeiculosModal @ref="_modalVeiculo" AoSalvarComSucesso="OnVeiculoSalvo" />
+<VeiculosModal @ref="_modalVeiculo" AoSalvarComSucesso="OnVeiculoSalvo" AoExcluirComSucesso="CarregarDados" />

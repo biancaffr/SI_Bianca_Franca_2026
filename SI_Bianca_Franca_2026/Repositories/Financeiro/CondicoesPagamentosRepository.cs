@@ -165,6 +165,19 @@ namespace SI_Bianca_Franca_2026.Repositories.Financeiro
                 new { Ativo = novoStatus, DataUltimaAlteracao = DateTime.Now, IdUsuario = idUsuario, Id = id });
         }
 
+        public async Task<bool> EstaEmUsoAsync(int id)
+        {
+            using var conexao = new MySqlConnection(_stringConexao);
+            string sql = @"SELECT COUNT(1) FROM (
+                SELECT id_condicao_pagamento FROM clientes         WHERE id_condicao_pagamento = @Id
+                UNION ALL
+                SELECT id_condicao_pagamento FROM contas_pagar     WHERE id_condicao_pagamento = @Id
+                UNION ALL
+                SELECT id_condicao_pagamento FROM contas_receber   WHERE id_condicao_pagamento = @Id
+            ) AS referencias";
+            var qtde = await conexao.ExecuteScalarAsync<int>(sql, new { Id = id });
+            return qtde > 0;
+        }
         public async Task RemoverAsync(int id)
         {
             using var conexao = new MySqlConnection(_stringConexao);
