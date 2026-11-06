@@ -716,7 +716,6 @@
         <th>Produto</th>
         <th>Unidade</th>
         <th>Categoria</th>
-        <th class="text-end">Saldo</th>
     </Cabecalho>
     <Linha Context="p">
         <td>@p.Id</td>
@@ -728,7 +727,6 @@
         <td>@p.Produto</td>
         <td>@(p.OUnidadeMedida?.Sigla ?? "—")</td>
         <td>@(p.OCategoria?.Categoria ?? "—")</td>
-        <td class="text-end">@p.Saldo.ToString("0.####", _ptBR)</td>
     </Linha>
 </ModalPesquisa>
 

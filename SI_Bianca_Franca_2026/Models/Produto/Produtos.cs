@@ -6,8 +6,6 @@ namespace SI_Bianca_Franca_2026.Models.Produto
     {
         public string Produto { get; set; } = string.Empty;
         public string? Referencia { get; set; }
-        public decimal Saldo { get; set; }
-        public decimal? PrecoCusto { get; set; }
         public decimal? PrecoVenda { get; set; }
         public decimal EstoqueMinimo { get; set; }
         public decimal? ValorUltimaCompra { get; set; }

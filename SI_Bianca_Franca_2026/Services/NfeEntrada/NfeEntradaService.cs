@@ -1,10 +1,13 @@
-﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
+﻿using SI_Bianca_Franca_2026.DTOs.Estoque;
+using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.NfeEntrada;
+using SI_Bianca_Franca_2026.Models.Estoque;
 using SI_Bianca_Franca_2026.Models.NfeEntrada;
 using SI_Bianca_Franca_2026.Repositories.Financeiro;
 using SI_Bianca_Franca_2026.Repositories.NfeEntrada;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
+using SI_Bianca_Franca_2026.Services.Estoque;
 
 namespace SI_Bianca_Franca_2026.Services.NfeEntrada
 {
@@ -13,17 +16,20 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
         private readonly NfeEntradaRepository _repository;
         private readonly ProdutosRepository _produtosRepository;
         private readonly CondicoesPagamentosRepository _condicoesRepository;
+        private readonly MovimentacoesEstoqueService _estoqueService;
         private readonly IAppContextService _appContext;
 
         public NfeEntradaService(
             NfeEntradaRepository repository,
             ProdutosRepository produtosRepository,
             CondicoesPagamentosRepository condicoesRepository,
+            MovimentacoesEstoqueService estoqueService,
             IAppContextService appContext)
         {
             _repository = repository;
             _produtosRepository = produtosRepository;
             _condicoesRepository = condicoesRepository;
+            _estoqueService = estoqueService;
             _appContext = appContext;
         }
 
@@ -84,6 +90,16 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
             // Rateio de frete/seguro/outras por item proporcional ao valor total
             var totalItens = itens.Sum(i => i.ValorTotal);
             var produtos = new Dictionary<int, Models.Produto.Produtos>();
+            var estoque = new Dictionary<int, EstoqueProdutoDTO>();
+            var movimentacao = new MovimentacoesEstoque
+            {
+                TipoMovimentacao = "ENTRADA",
+                NotaNumero = entity.Numero,
+                NotaModelo = entity.Modelo,
+                NotaSerie = entity.Serie,
+                IdFornecedor = entity.IdFornecedor,
+                Observacao = $"ENTRADA PELA NF-E Nº {entity.Numero} (MODELO {entity.Modelo}, SÉRIE {entity.Serie})"
+            };
             foreach (var item in itens)
             {
                 var proporcao = totalItens > 0 ? item.ValorTotal / totalItens : 0;
@@ -94,18 +110,31 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
                     (item.ValorTotal + item.RateioFrete + item.RateioSeguro + item.RateioOutras)
                     / item.Quantidade, 4);
 
-                // Custo médio ponderado (usa saldo/custo do produto ANTES desta entrada)
                 if (!produtos.TryGetValue(item.IdProduto, out var produto))
                 {
                     produto = await _produtosRepository.PesquisarAsync(item.IdProduto)
                         ?? throw new Exception("Produto não encontrado.");
                     produtos[item.IdProduto] = produto;
+                    estoque[item.IdProduto] = await _estoqueService.ObterEstoque(item.IdProduto);
                 }
-                item.CustoMedio = CalcularCustoMedio(
-                    produto.Saldo, produto.PrecoCusto ?? 0, item.Quantidade, item.CustoFinal ?? 0);
-                produto.Saldo += item.Quantidade;
-                produto.PrecoCusto = Math.Round(item.CustoMedio.Value, 2);
                 produto.ValorUltimaCompra = Math.Round(item.CustoFinal ?? 0, 2);
+
+                // Custo médio ponderado: usa saldo e custo médio do produto ANTES desta entrada
+                // (sem movimentação anterior, saldo e custo médio são 0)
+                var atual = estoque[item.IdProduto];
+                item.CustoMedio = MovimentacoesEstoqueService.CalcularCustoMedio(
+                    atual.Saldo, atual.CustoMedio, item.Quantidade, item.CustoFinal ?? 0);
+                atual.Saldo += item.Quantidade;
+                atual.CustoMedio = item.CustoMedio.Value;
+
+                movimentacao.Itens.Add(new MovimentacoesEstoqueItens
+                {
+                    IdProduto = item.IdProduto,
+                    Quantidade = item.Quantidade,
+                    CustoUnitario = item.CustoFinal ?? 0,
+                    SaldoApos = atual.Saldo,
+                    CustoMedio = atual.CustoMedio
+                });
 
                 item.NotaNumero = entity.Numero;
                 item.NotaModelo = entity.Modelo;
@@ -128,26 +157,14 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
             await _repository.InserirAsync(entity);
             await _repository.InserirItensAsync(itens);
 
-            // Grava saldo, custo médio (preco_custo) e valor da última compra dos produtos
+            // Entrada no estoque (kardex) e valor da última compra dos produtos
+            await _estoqueService.Registrar(movimentacao);
             foreach (var produto in produtos.Values)
                 await _produtosRepository.AtualizarAsync(produto);
 
             // Gera contas a pagar se houver condição de pagamento
             if (entity.IdCondicaoPagamento.HasValue)
                 await GerarContasPagar(entity);
-        }
-
-        /// <summary>
-        /// Custo médio ponderado: (saldo x custo atual + qtde x custo unitário) / (saldo + qtde).
-        /// Saldo negativo é tratado como zero.
-        /// </summary>
-        public static decimal CalcularCustoMedio(
-            decimal saldo, decimal custoAtual, decimal quantidade, decimal custoUnitario)
-        {
-            saldo = Math.Max(0, saldo);
-            var novoSaldo = saldo + quantidade;
-            if (novoSaldo <= 0) return 0;
-            return Math.Round((saldo * custoAtual + quantidade * custoUnitario) / novoSaldo, 4);
         }
 
         public async Task Cancelar(
@@ -159,17 +176,36 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
             if (nota.Situacao == "CANCELADA")
                 throw new Exception("Esta nota já está cancelada.");
 
-            // Estorna saldo dos produtos
+            // Estorna o estoque: saída pelo custo médio atual (o custo médio não muda na saída)
+            var estoque = new Dictionary<int, EstoqueProdutoDTO>();
+            var estorno = new MovimentacoesEstoque
+            {
+                TipoMovimentacao = "SAIDA",
+                NotaNumero = numero,
+                NotaModelo = modelo,
+                NotaSerie = serie,
+                IdFornecedor = idFornecedor,
+                Observacao = $"ESTORNO POR CANCELAMENTO DA NF-E Nº {numero} (MODELO {modelo}, SÉRIE {serie})"
+            };
             foreach (var item in nota.Itens)
             {
-                var produto = await _produtosRepository.PesquisarAsync(item.IdProduto);
-                if (produto != null)
+                if (!estoque.TryGetValue(item.IdProduto, out var atual))
                 {
-                    produto.Saldo -= item.Quantidade;
-                    if (produto.Saldo < 0) produto.Saldo = 0;
-                    await _produtosRepository.AtualizarAsync(produto);
+                    atual = await _estoqueService.ObterEstoque(item.IdProduto);
+                    estoque[item.IdProduto] = atual;
                 }
+                atual.Saldo = Math.Max(0, atual.Saldo - item.Quantidade);
+
+                estorno.Itens.Add(new MovimentacoesEstoqueItens
+                {
+                    IdProduto = item.IdProduto,
+                    Quantidade = item.Quantidade,
+                    CustoUnitario = atual.CustoMedio,
+                    SaldoApos = atual.Saldo,
+                    CustoMedio = atual.CustoMedio
+                });
             }
+            await _estoqueService.Registrar(estorno);
 
             await _repository.CancelarAsync(
                 numero, modelo, serie, idFornecedor, _appContext.IdUsuarioAtual);

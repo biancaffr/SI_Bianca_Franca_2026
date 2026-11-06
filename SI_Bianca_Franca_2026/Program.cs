@@ -1,10 +1,12 @@
 using SI_Bianca_Franca_2026.Components;
+using SI_Bianca_Franca_2026.Repositories.Estoque;
 using SI_Bianca_Franca_2026.Repositories.Financeiro;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
 using SI_Bianca_Franca_2026.Repositories.NfeEntrada;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
+using SI_Bianca_Franca_2026.Services.Estoque;
 using SI_Bianca_Franca_2026.Services.Financeiro;
 using SI_Bianca_Franca_2026.Services.Localizacao;
 using SI_Bianca_Franca_2026.Services.NfeEntrada;
@@ -62,6 +64,9 @@ builder.Services.AddScoped<ProdutosService>();
 
 builder.Services.AddScoped<NfeEntradaRepository>();
 builder.Services.AddScoped<NfeEntradaService>();
+
+builder.Services.AddScoped<MovimentacoesEstoqueRepository>();
+builder.Services.AddScoped<MovimentacoesEstoqueService>();
 
 var app = builder.Build();
 

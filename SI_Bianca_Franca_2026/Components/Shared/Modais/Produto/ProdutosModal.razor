@@ -116,30 +116,12 @@
             <div style="display: flex; flex-wrap: wrap; gap: 12px;" @key="_dto.Id">
 
                 <div class="form-group" style="width: 140px;">
-                    <label>Saldo</label>
-                    <input class="form-control" type="text" maxlength="11" value="@SaldoTexto"
-                           @onchange="e => SaldoTexto = e.Value?.ToString() ?? string.Empty" />
-
-                    <ValidationMessage For="@(() => _dto.Saldo)" class="text-danger" />
-                </div>
-
-                <div class="form-group" style="width: 140px;">
                     <label>Estoque Mín</label>
                     <input class="form-control" type="text" maxlength="11" value="@EstoqueMinimoTexto"
                            @onchange="e => EstoqueMinimoTexto = e.Value?.ToString() ?? string.Empty" />
                     <ValidationMessage For="@(() => _dto.EstoqueMinimo)" class="text-danger" />
                 </div>
 
-
-                <div class="form-group" style="width: 180px;">
-                    <label>Preço de Custo</label>
-                    <div class="input-group">
-                        <span class="input-group-text">R$</span>
-                        <input class="form-control" type="text" maxlength="8" value="@PrecoCustoTexto"
-                               @onchange="e => PrecoCustoTexto = e.Value?.ToString() ?? string.Empty" />
-                    </div>
-                    <ValidationMessage For="@(() => _dto.PrecoCusto)" class="text-danger" />
-                </div>
 
                 @if (_dto.Tipo == "PRODUTO_FINAL")
                 {

@@ -19,8 +19,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 p.id,
                 p.produto,
                 p.referencia,
-                p.saldo,
-                p.preco_custo               AS PrecoCusto,
                 p.preco_venda               AS PrecoVenda,
                 p.estoque_minimo            AS EstoqueMinimo,
                 p.valor_ultima_compra       AS ValorUltimaCompra,
@@ -106,13 +104,13 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO produtos
-                           (produto, referencia, saldo, preco_custo, preco_venda,
+                           (produto, referencia, preco_venda,
                             estoque_minimo, valor_ultima_compra, tipo,
                             id_categoria, id_unidade_medida, ncm, cest, origem,
                             observacao, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Produto, @Referencia, @Saldo, @PrecoCusto, @PrecoVenda,
+                           (@Produto, @Referencia, @PrecoVenda,
                             @EstoqueMinimo, @ValorUltimaCompra, @Tipo,
                             @IdCategoria, @IdUnidadeMedida, @Ncm, @Cest, @Origem,
                             @Observacao, @DataCriacao, @DataUltimaAlteracao,
@@ -127,8 +125,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             string sql = @"UPDATE produtos SET
                            produto                       = @Produto,
                            referencia                    = @Referencia,
-                           saldo                         = @Saldo,
-                           preco_custo                   = @PrecoCusto,
                            preco_venda                   = @PrecoVenda,
                            estoque_minimo                = @EstoqueMinimo,
                            valor_ultima_compra           = @ValorUltimaCompra,

@@ -3,12 +3,14 @@ using SI_Bianca_Franca_2026.Components.Shared;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto;
+using SI_Bianca_Franca_2026.DTOs.Estoque;
 using SI_Bianca_Franca_2026.DTOs.Filtros;
 using SI_Bianca_Franca_2026.DTOs.NfeEntrada;
 using SI_Bianca_Franca_2026.Models.Financeiro;
 using SI_Bianca_Franca_2026.Models.NfeEntrada;
 using SI_Bianca_Franca_2026.Models.Pessoa;
 using SI_Bianca_Franca_2026.Models.Produto;
+using SI_Bianca_Franca_2026.Services.Estoque;
 using SI_Bianca_Franca_2026.Services.Financeiro;
 using SI_Bianca_Franca_2026.Services.NfeEntrada;
 using SI_Bianca_Franca_2026.Services.Pessoa;
@@ -23,6 +25,7 @@ public partial class NfeEntradaModal
     [Inject] private FornecedoresService FornecedoresService { get; set; } = default!;
     [Inject] private TransportadorasService TransportadorasService { get; set; } = default!;
     [Inject] private ProdutosService ProdutosService { get; set; } = default!;
+    [Inject] private MovimentacoesEstoqueService MovimentacoesEstoqueService { get; set; } = default!;
     [Inject] private CondicoesPagamentosService CondicoesPagamentosService { get; set; } = default!;
 
     [Parameter] public EventCallback<NfeEntradas> AoSalvarComSucesso { get; set; }
@@ -48,8 +51,8 @@ public partial class NfeEntradaModal
     private string _erroMotivo = string.Empty;
 
     private NfeEntradaDTO _dto = new();
-    // Cache dos produtos já escolhidos (saldo/custo usados no cálculo do custo médio)
-    private List<Produtos> _produtos = new();
+    // Estoque (saldo e custo médio) dos produtos já escolhidos, usado no cálculo do custo médio
+    private Dictionary<int, EstoqueProdutoDTO> _estoque = new();
     private NfeEntradaItensDTO? _itemEmPesquisa;
 
     private FornecedoresModal _modalFornecedor = default!;
@@ -85,7 +88,7 @@ public partial class NfeEntradaModal
         _parcelasGeradas = false;
         _confirmandoGerarParcelas = false;
         _visualizando = false;
-        _produtos = new();
+        _estoque = new();
         _aberto = true;
         StateHasChanged();
         return Task.CompletedTask;
@@ -276,13 +279,12 @@ public partial class NfeEntradaModal
         StateHasChanged();
     }
 
-    private void SelecionarProduto(Produtos produto)
+    private async Task SelecionarProduto(Produtos produto)
     {
         var item = _itemEmPesquisa;
         if (item is null) return;
 
-        _produtos.RemoveAll(p => p.Id == produto.Id);
-        _produtos.Add(produto);
+        _estoque[produto.Id] = await MovimentacoesEstoqueService.ObterEstoque(produto.Id);
 
         item.IdProduto = produto.Id;
         item.NomeProduto = produto.Produto;
@@ -359,7 +361,7 @@ public partial class NfeEntradaModal
         RecalcularCustoMedio();
     }
 
-    // Custo médio ponderado usando saldo e custo atuais do produto (mesmo cálculo do Service)
+    // Custo médio ponderado usando saldo e custo médio atuais do produto (mesmo cálculo do Service)
     private void RecalcularCustoMedio()
     {
         var estado = new Dictionary<int, (decimal Saldo, decimal Custo)>();
@@ -368,12 +370,12 @@ public partial class NfeEntradaModal
             if (item.IdProduto <= 0 || item.Quantidade <= 0) { item.CustoMedio = 0; continue; }
             if (!estado.TryGetValue(item.IdProduto, out var e))
             {
-                var p = _produtos.FirstOrDefault(x => x.Id == item.IdProduto);
-                e = (p?.Saldo ?? 0, p?.PrecoCusto ?? 0);
+                _estoque.TryGetValue(item.IdProduto, out var est);
+                e = (est?.Saldo ?? 0, est?.CustoMedio ?? 0);
             }
-            item.CustoMedio = NfeEntradaService.CalcularCustoMedio(
+            item.CustoMedio = MovimentacoesEstoqueService.CalcularCustoMedio(
                 e.Saldo, e.Custo, item.Quantidade, item.CustoFinal);
-            estado[item.IdProduto] = (e.Saldo + item.Quantidade, Math.Round(item.CustoMedio, 2));
+            estado[item.IdProduto] = (e.Saldo + item.Quantidade, item.CustoMedio);
         }
     }
 

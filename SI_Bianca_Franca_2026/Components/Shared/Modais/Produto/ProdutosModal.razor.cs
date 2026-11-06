@@ -42,19 +42,6 @@ public partial class ProdutosModal
         { 8, "8 — Nacional com conteúdo superior a 70%" }
     };
 
-    private string SaldoTexto
-    {
-        get => _dto.Saldo == 0 ? string.Empty : _dto.Saldo.ToString("0.####", CultureInfo.GetCultureInfo("pt-BR"));
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                _dto.Saldo = 0;
-            else if (decimal.TryParse(value, NumberStyles.Any,
-                CultureInfo.GetCultureInfo("pt-BR"), out var r))
-                _dto.Saldo = r;
-        }
-    }
-
     private string EstoqueMinimoTexto
     {
         get => _dto.EstoqueMinimo == 0 ? string.Empty : _dto.EstoqueMinimo.ToString("0.####", CultureInfo.GetCultureInfo("pt-BR"));
@@ -65,19 +52,6 @@ public partial class ProdutosModal
             else if (decimal.TryParse(value, NumberStyles.Any,
                 CultureInfo.GetCultureInfo("pt-BR"), out var r))
                 _dto.EstoqueMinimo = r;
-        }
-    }
-
-    private string PrecoCustoTexto
-    {
-        get => _dto.PrecoCusto?.ToString("N2", CultureInfo.GetCultureInfo("pt-BR")) ?? "";
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                _dto.PrecoCusto = null;
-            else if (decimal.TryParse(value, NumberStyles.Any,
-                CultureInfo.GetCultureInfo("pt-BR"), out var r))
-                _dto.PrecoCusto = r;
         }
     }
 
@@ -138,8 +112,6 @@ public partial class ProdutosModal
             Id = produto.Id,
             Produto = produto.Produto,
             Referencia = produto.Referencia,
-            Saldo = produto.Saldo,
-            PrecoCusto = produto.PrecoCusto,
             PrecoVenda = produto.PrecoVenda,
             EstoqueMinimo = produto.EstoqueMinimo,
             ValorUltimaCompra = produto.ValorUltimaCompra,
@@ -178,11 +150,6 @@ public partial class ProdutosModal
         {
             _erro = string.Empty;
 
-            if (_dto.PrecoCusto > 99999.99m)
-            {
-                _erro = "Preço de Custo: valor máximo permitido é 99.999,99.";
-                return;
-            }
             if (_dto.PrecoVenda > 99999.99m)
             {
                 _erro = "Preço de Venda: valor máximo permitido é 99.999,99.";
@@ -191,11 +158,6 @@ public partial class ProdutosModal
             if (_dto.ValorUltimaCompra > 99999.99m)
             {
                 _erro = "Valor da Última Compra: valor máximo permitido é 99.999,99.";
-                return;
-            }
-            if (_dto.Saldo > 999999.9999m)
-            {
-                _erro = "Saldo: valor máximo permitido é 999.999,9999.";
                 return;
             }
             if (_dto.EstoqueMinimo > 999999.9999m)
@@ -209,8 +171,6 @@ public partial class ProdutosModal
                 Id = _dto.Id,
                 Produto = _dto.Produto,
                 Referencia = _dto.Referencia,
-                Saldo = _dto.Saldo,
-                PrecoCusto = _dto.PrecoCusto,
                 PrecoVenda = _dto.PrecoVenda,
                 EstoqueMinimo = _dto.EstoqueMinimo,
                 ValorUltimaCompra = _dto.ValorUltimaCompra,

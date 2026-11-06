@@ -14,13 +14,7 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         public string? Referencia { get; set; }
 
         [Range(0, 999999.9999, ErrorMessage = "Máx: 999.999,9999")]
-        public decimal Saldo { get; set; }
-
-        [Range(0, 999999.9999, ErrorMessage = "Máx: 999.999,9999")]
         public decimal EstoqueMinimo { get; set; }
-
-        [Range(0, 99999.99, ErrorMessage = "Máx: 99.999,99")]
-        public decimal? PrecoCusto { get; set; }
 
         [Range(0, 99999.99, ErrorMessage = "Máx: 99.999,99")]
         public decimal? PrecoVenda { get; set; }
