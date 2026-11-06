@@ -90,7 +90,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY c.nome_razao_social";
+            var sql = $"{SqlBase} {whereClause} ORDER BY c.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Clientes, Cidades, Estados, CondicoesPagamentos, Clientes>(

@@ -51,7 +51,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Financeiro
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY c.condicao_pagamento";
+            var sql = $"{SqlBase} {whereClause} ORDER BY c.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = (await conexao.QueryAsync<CondicoesPagamentos>(sql, param)).ToList();

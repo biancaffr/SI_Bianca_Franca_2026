@@ -31,9 +31,8 @@
         @* ════════════════════════════════════════════
            MODO VISUALIZAÇÃO
            ════════════════════════════════════════════ *@
-        <div class="card mb-3">
-            <div class="card-header">Dados da nota</div>
-            <div class="card-body">
+        <div class="mb-3">
+            <div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;">
                     <div class="form-group" style="width:80px;">
                         <label>Modelo</label>
@@ -67,9 +66,10 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Produtos</div>
-            <div class="card-body p-0">
+        <hr class="my-3" />
+
+        <div class="mb-3">
+            <div>
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -111,9 +111,8 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Frete e Transporte</div>
-            <div class="card-body">
+        <div class="mb-3">
+            <div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;">
                     <div class="form-group" style="width:260px;">
                         <label class="obrigatorio">Modalidade de Frete</label>
@@ -139,9 +138,18 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Condição de Pagamento</div>
-            <div class="card-body">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <div class="form-group" style="width:220px;">
+                <label class="fw-semibold">Total da nota</label>
+                <input class="form-control fw-bold text-end" disabled
+                       value="R$ @_dto.ValorTotal.ToString("0.##", _ptBR)" />
+            </div>
+        </div>
+
+        <hr class="my-3" />
+
+        <div class="mb-3">
+            <div>
                 <div class="form-group mb-2">
                     <label>Condição</label>
                     <input class="form-control" disabled value="@(_dto.NomeCondicaoPagamento ?? "—")" />
@@ -173,16 +181,8 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Fechamento</div>
-            <div class="card-body">
-                <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-                    <div class="form-group" style="width:220px;">
-                        <label class="fw-semibold">Total da nota</label>
-                        <input class="form-control fw-bold text-end" disabled
-                               value="R$ @_dto.ValorTotal.ToString("0.##", _ptBR)" />
-                    </div>
-                </div>
+        <div class="mb-3">
+            <div>
                 @if (!string.IsNullOrWhiteSpace(_dto.Observacao))
                 {
                     <div class="form-group">
@@ -226,9 +226,8 @@
            ════════════════════════════════════════════ *@
 
         @* ── BLOCO 1: Chave da nota ── *@
-        <div class="card mb-3">
-            <div class="card-header">Dados da nota</div>
-            <div class="card-body">
+        <div class="mb-3">
+            <div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
                     <div class="form-group" style="width:90px;">
                         <label class="obrigatorio">Modelo</label>
@@ -260,23 +259,15 @@
                     <div class="form-group" style="flex:1;min-width:280px;">
                         <label class="obrigatorio">Fornecedor</label>
                         <div class="input-group">
-                            <select class="form-select"
+                            <input class="form-control" type="text" readonly
+                                   disabled="@_chaveBloqueada"
+                                   placeholder="Selecione..."
+                                   value="@_dto.NomeFornecedorCompleto" />
+                            <button class="btn btn-outline-secondary" type="button"
                                     disabled="@_chaveBloqueada"
-                                    value="@_dto.IdFornecedor"
-                                    @onchange="OnFornecedorAlterado">
-                                <option value="0">Selecione...</option>
-                                @foreach (var f in _fornecedores)
-                                {
-                                    <option value="@f.Id">@f.NomeRazaoSocial</option>
-                                }
-                            </select>
-                            @if (!_chaveBloqueada)
-                            {
-                                <button class="btn btn-outline-secondary" type="button"
-                                        @onclick="AbrirModalFornecedor" title="Novo fornecedor">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
-                            }
+                                    @onclick="AbrirPesquisaFornecedor" title="Pesquisar fornecedor">
+                                <i class="bi bi-search"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -309,8 +300,7 @@
                 }
 
                 @* ── DATAS (aparecem sempre, mas bloqueadas enquanto chave inválida) ── *@
-                <hr class="my-3" />
-                <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+                <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:12px;">
                     <div class="form-group" style="width:190px;">
                         <label class="obrigatorio">Data de Emissão</label>
                         <input class="form-control" type="date"
@@ -344,17 +334,18 @@
             </div>
         </div>
 
-        @* ── BLOCO 2: Produtos ── *@
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Produtos</span>
+        <hr class="my-3" />
+
+        @* ── Produtos ── *@
+        <div class="mb-3">
+            <div class="d-flex justify-content-end mb-2">
                 <button type="button" class="btn btn-sm btn-primary"
                         disabled="@(CamposBloqueados || ProdutosBloqueados)"
                         @onclick="AdicionarItem">
                     <i class="bi bi-plus-lg me-1"></i>Adicionar produto
                 </button>
             </div>
-            <div class="card-body p-0">
+            <div>
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -377,47 +368,41 @@
                             <tr>
                                 <td>
                                     <div class="input-group input-group-sm">
-                                        <select class="form-select form-select-sm"
-                                                disabled="@(CamposBloqueados || ProdutosBloqueados)"
-                                                value="@itemLocal.IdProduto"
-                                                @onchange="e => AtualizarProdutoItem(itemLocal, e.Value?.ToString())">
-                                            <option value="0">Selecione...</option>
-                                            @foreach (var p in _produtos)
-                                            {
-                                                <option value="@p.Id">@p.Produto</option>
-                                            }
-                                        </select>
+                                        <input class="form-control form-control-sm" type="text" readonly
+                                               disabled="@(CamposBloqueados || ProdutosBloqueados)"
+                                               placeholder="Selecione..."
+                                               value="@itemLocal.NomeProduto" />
                                         <button class="btn btn-outline-secondary btn-sm" type="button"
                                                 disabled="@(CamposBloqueados || ProdutosBloqueados)"
-                                                @onclick="AbrirModalProduto" title="Novo produto">
-                                            <i class="bi bi-plus-lg"></i>
+                                                @onclick="() => AbrirPesquisaProduto(itemLocal)" title="Pesquisar produto">
+                                            <i class="bi bi-search"></i>
                                         </button>
                                     </div>
                                 </td>
                                 <td class="text-end">@itemLocal.SiglaProduto</td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
-                                           disabled="@CamposBloqueados"
+                                           disabled="@(CamposBloqueados || itemLocal.IdProduto == 0)"
                                            value="@itemLocal.Quantidade.ToString(_ptBR)"
                                            @onchange="e => AtualizarDecimalItem(e, v => { itemLocal.Quantidade = v; RecalcularCustoFinal(); })" />
                                 </td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
-                                           disabled="@CamposBloqueados"
+                                           disabled="@(CamposBloqueados || itemLocal.IdProduto == 0)"
                                            value="@itemLocal.ValorUnitario.ToString(_ptBR)"
                                            @onchange="e => AtualizarDecimalItem(e, v => { itemLocal.ValorUnitario = v; RecalcularCustoFinal(); })" />
                                 </td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
                                            @key="@($"pct-{itemLocal.Sequencia}-{_versaoDesconto}")"
-                                           disabled="@CamposBloqueados"
+                                           disabled="@(CamposBloqueados || itemLocal.IdProduto == 0)"
                                            value="@itemLocal.PercentualDesconto.ToString(_ptBR)"
                                            @onchange="e => AtualizarPercentualDesconto(itemLocal, e.Value?.ToString())" />
                                 </td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
                                            @key="@($"vlr-{itemLocal.Sequencia}-{_versaoDesconto}")"
-                                           disabled="@CamposBloqueados"
+                                           disabled="@(CamposBloqueados || itemLocal.IdProduto == 0)"
                                            value="@itemLocal.ValorDesconto.ToString(_ptBR)"
                                            @onchange="e => AtualizarValorDesconto(itemLocal, e.Value?.ToString())" />
                                 </td>
@@ -446,9 +431,8 @@
         </div>
 
         @* ── BLOCO 3: Frete e Transporte ── *@
-        <div class="card mb-3">
-            <div class="card-header">Frete e Transporte</div>
-            <div class="card-body">
+        <div class="mb-3">
+            <div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;">
                     <div class="form-group" style="width:280px;">
                         <label class="obrigatorio">Modalidade de Frete</label>
@@ -464,20 +448,14 @@
                     <div class="form-group" style="flex:1;min-width:220px;">
                         <label>Transportadora</label>
                         <div class="input-group">
-                            <select class="form-select"
-                                    disabled="@(CamposBloqueados || _dto.TipoFrete == "9")"
-                                    value="@_dto.IdTransportadora"
-                                    @onchange="e => { _dto.IdTransportadora = int.TryParse(e.Value?.ToString(), out var r) && r > 0 ? r : null; StateHasChanged(); }">
-                                <option value="">Selecione...</option>
-                                @foreach (var t in _transportadoras)
-                                {
-                                    <option value="@t.Id">@t.NomeRazaoSocial</option>
-                                }
-                            </select>
+                            <input class="form-control" type="text" readonly
+                                   disabled="@(CamposBloqueados || _dto.TipoFrete == "9")"
+                                   placeholder="Selecione..."
+                                   value="@_dto.NomeTransportadora" />
                             <button class="btn btn-outline-secondary" type="button"
                                     disabled="@(CamposBloqueados || _dto.TipoFrete == "9")"
-                                    @onclick="AbrirModalTransportadora" title="Nova transportadora">
-                                <i class="bi bi-plus-lg"></i>
+                                    @onclick="AbrirPesquisaTransportadora" title="Pesquisar transportadora">
+                                <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </div>
@@ -506,45 +484,31 @@
             </div>
         </div>
 
-            <div class="card-body">
-                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-                    <div class="form-group" style="width:220px;">
-                        <label class="fw-semibold">Total da nota</label>
-                        <input class="form-control fw-bold text-end" disabled
-                               value="R$ @TotalNota.ToString("0.##", _ptBR)" />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Observações</label>
-                    <textarea class="form-control"
-                              disabled="@CamposBloqueados"
-                              @bind="_dto.Observacao" rows="2"></textarea>
-                </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <div class="form-group" style="width:220px;">
+                <label class="fw-semibold">Total da nota</label>
+                <input class="form-control fw-bold text-end" disabled
+                       value="R$ @TotalNota.ToString("0.##", _ptBR)" />
             </div>
-     
+        </div>
+
+        <hr class="my-3" />
 
         @* ── BLOCO 5: Condição de Pagamento ── *@
-        <div class="card mb-3">
-            <div class="card-header">Pagamento</div>
-            <div class="card-body">
+        <div class="mb-3">
+            <div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
                     <div class="form-group" style="flex:1;min-width:250px;">
                         <label class="obrigatorio">Condição de Pagamento</label>
                         <div class="input-group">
-                            <select class="form-select"
-                                    disabled="@(CamposBloqueados || ProdutosBloqueados)"
-                                    value="@_dto.IdCondicaoPagamento"
-                                    @onchange="OnCondicaoAlterada">
-                                <option value="">Selecione...</option>
-                                @foreach (var cp in _condicoes)
-                                {
-                                    <option value="@cp.Id">@cp.CondicaoPagamento</option>
-                                }
-                            </select>
+                            <input class="form-control" type="text" readonly
+                                   disabled="@(CamposBloqueados || ProdutosBloqueados)"
+                                   placeholder="Selecione..."
+                                   value="@_dto.NomeCondicaoPagamento" />
                             <button class="btn btn-outline-secondary" type="button"
                                     disabled="@(CamposBloqueados || ProdutosBloqueados)"
-                                    @onclick="AbrirModalCondicao" title="Nova condição">
-                                <i class="bi bi-plus-lg"></i>
+                                    @onclick="AbrirPesquisaCondicao" title="Pesquisar condição de pagamento">
+                                <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </div>
@@ -585,6 +549,13 @@
                     </div>
                 }
             </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>Observações</label>
+            <textarea class="form-control"
+                      disabled="@CamposBloqueados"
+                      @bind="_dto.Observacao" rows="2"></textarea>
         </div>
 
         <div class="form-actions">
@@ -697,6 +668,90 @@
         </div>
     </div>
 }
+
+<ModalPesquisa @ref="_pesqFornecedor" TItem="Fornecedores" Titulo="Pesquisar fornecedor"
+               TextoNovo="Novo fornecedor" Carregar="BuscarFornecedores"
+               AoSelecionar="SelecionarFornecedor" AoNovo="AbrirModalFornecedor">
+    <Cabecalho>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Nome / Razão Social</th>
+        <th>Cidade</th>
+        <th>CPF / CNPJ</th>
+    </Cabecalho>
+    <Linha Context="f">
+        <td>@f.Id</td>
+        <td>@(f.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
+        <td>@f.NomeRazaoSocial</td>
+        <td>@(f.OCidade is null ? "—" : $"{f.OCidade.Cidade} - {f.OCidade.OEstado?.Uf}")</td>
+        <td>@(f.CpfCnpj ?? "—")</td>
+    </Linha>
+</ModalPesquisa>
+
+<ModalPesquisa @ref="_pesqTransportadora" TItem="Transportadoras" Titulo="Pesquisar transportadora"
+               TextoNovo="Nova transportadora" Carregar="BuscarTransportadoras"
+               AoSelecionar="SelecionarTransportadora" AoNovo="AbrirModalTransportadora">
+    <Cabecalho>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Nome / Razão Social</th>
+        <th>Cidade</th>
+        <th>CPF / CNPJ</th>
+    </Cabecalho>
+    <Linha Context="t">
+        <td>@t.Id</td>
+        <td>@(t.TipoPessoa == "FISICA" ? "Pessoa Física" : "Pessoa Jurídica")</td>
+        <td>@t.NomeRazaoSocial</td>
+        <td>@(t.OCidade is null ? "—" : $"{t.OCidade.Cidade} - {t.OCidade.OEstado?.Uf}")</td>
+        <td>@(t.CpfCnpj ?? "—")</td>
+    </Linha>
+</ModalPesquisa>
+
+<ModalPesquisa @ref="_pesqProduto" TItem="Produtos" Titulo="Pesquisar produto"
+               TextoNovo="Novo produto" Carregar="BuscarProdutos"
+               AoSelecionar="SelecionarProduto" AoNovo="AbrirModalProduto">
+    <Cabecalho>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Produto</th>
+        <th>Unidade</th>
+        <th>Categoria</th>
+        <th class="text-end">Saldo</th>
+    </Cabecalho>
+    <Linha Context="p">
+        <td>@p.Id</td>
+        <td>
+            <span class="badge @(p.Tipo == "PRODUTO_FINAL" ? "bg-primary" : "bg-warning text-dark")">
+                @(p.Tipo == "PRODUTO_FINAL" ? "Produto Final" : "Matéria-Prima")
+            </span>
+        </td>
+        <td>@p.Produto</td>
+        <td>@(p.OUnidadeMedida?.Sigla ?? "—")</td>
+        <td>@(p.OCategoria?.Categoria ?? "—")</td>
+        <td class="text-end">@p.Saldo.ToString("0.####", _ptBR)</td>
+    </Linha>
+</ModalPesquisa>
+
+<ModalPesquisa @ref="_pesqCondicao" TItem="CondicoesPagamentos" Titulo="Pesquisar condição de pagamento"
+               TextoNovo="Nova condição" Carregar="BuscarCondicoes" Largura="800px"
+               AoSelecionar="SelecionarCondicao" AoNovo="AbrirModalCondicao">
+    <Cabecalho>
+        <th>ID</th>
+        <th>Condição de Pagamento</th>
+        <th class="text-end">Parcelas</th>
+        <th class="text-end">Desconto (%)</th>
+        <th class="text-end">Juros (%)</th>
+        <th class="text-end">Multa (%)</th>
+    </Cabecalho>
+    <Linha Context="cp">
+        <td>@cp.Id</td>
+        <td>@cp.CondicaoPagamento</td>
+        <td class="text-end">@cp.Parcelas.Count</td>
+        <td class="text-end">@cp.DescontoPercentual.ToString("0.##", _ptBR)%</td>
+        <td class="text-end">@cp.TaxaJurosPercentual.ToString("0.##", _ptBR)%</td>
+        <td class="text-end">@cp.MultaPercentual.ToString("0.##", _ptBR)%</td>
+    </Linha>
+</ModalPesquisa>
 
 <FornecedoresModal @ref="_modalFornecedor" AoSalvarComSucesso="OnFornecedorSalvo" />
 <TransportadorasModal @ref="_modalTransportadora" AoSalvarComSucesso="OnTransportadoraSalva" />

@@ -74,7 +74,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Localizacao
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY p.pais, e.estado";
+            var sql = $"{SqlBase} {whereClause} ORDER BY e.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Estados, Paises, Estados>(

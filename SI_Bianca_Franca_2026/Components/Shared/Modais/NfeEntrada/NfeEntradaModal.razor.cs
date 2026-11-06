@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using SI_Bianca_Franca_2026.Components.Shared;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Financeiro;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Pessoa;
 using SI_Bianca_Franca_2026.Components.Shared.Modais.Produto;
@@ -47,15 +48,19 @@ public partial class NfeEntradaModal
     private string _erroMotivo = string.Empty;
 
     private NfeEntradaDTO _dto = new();
-    private List<Fornecedores> _fornecedores = new();
-    private List<Transportadoras> _transportadoras = new();
+    // Cache dos produtos já escolhidos (saldo/custo usados no cálculo do custo médio)
     private List<Produtos> _produtos = new();
-    private List<CondicoesPagamentos> _condicoes = new();
+    private NfeEntradaItensDTO? _itemEmPesquisa;
 
     private FornecedoresModal _modalFornecedor = default!;
     private TransportadorasModal _modalTransportadora = default!;
     private ProdutosModal _modalProduto = default!;
     private CondicoesPagamentosModal _modalCondicao = default!;
+
+    private ModalPesquisa<Fornecedores> _pesqFornecedor = default!;
+    private ModalPesquisa<Transportadoras> _pesqTransportadora = default!;
+    private ModalPesquisa<Produtos> _pesqProduto = default!;
+    private ModalPesquisa<CondicoesPagamentos> _pesqCondicao = default!;
 
     private static readonly CultureInfo _ptBR = CultureInfo.GetCultureInfo("pt-BR");
 
@@ -68,10 +73,10 @@ public partial class NfeEntradaModal
 
     // ── Abertura ──────────────────────────────────────────
 
-    public async Task AbrirNovo()
+    public Task AbrirNovo()
     {
         _dto = new NfeEntradaDTO();
-        _dto.Itens.Add(new NfeEntradaItensDTO { Sequencia = 1 });
+        _dto.Itens.Add(new NfeEntradaItensDTO { Sequencia = 1, Quantidade = 1 });
         _statusChave = "incompleta";
         _chaveBloqueada = false;
         _datasValidas = false;
@@ -80,9 +85,10 @@ public partial class NfeEntradaModal
         _parcelasGeradas = false;
         _confirmandoGerarParcelas = false;
         _visualizando = false;
-        await CarregarListas();
+        _produtos = new();
         _aberto = true;
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
     public async Task AbrirVisualizar(string numero, string modelo, string serie, int idFornecedor)
@@ -176,9 +182,10 @@ public partial class NfeEntradaModal
         await VerificarChave();
     }
 
-    private async Task OnFornecedorAlterado(ChangeEventArgs e)
+    private async Task SelecionarFornecedor(Fornecedores f)
     {
-        _dto.IdFornecedor = int.TryParse(e.Value?.ToString(), out var r) ? r : 0;
+        _dto.IdFornecedor = f.Id;
+        _dto.NomeFornecedorCompleto = $"#{f.Id} — {f.CpfCnpj} — {f.NomeRazaoSocial}";
         _dto.Parcelas = new();
         _parcelasGeradas = false;
         await VerificarChave();
@@ -254,7 +261,7 @@ public partial class NfeEntradaModal
 
     private void AdicionarItem()
     {
-        _dto.Itens.Add(new NfeEntradaItensDTO { Sequencia = (short)(_dto.Itens.Count + 1) });
+        _dto.Itens.Add(new NfeEntradaItensDTO { Sequencia = (short)(_dto.Itens.Count + 1), Quantidade = 1 });
         StateHasChanged();
     }
 
@@ -269,13 +276,18 @@ public partial class NfeEntradaModal
         StateHasChanged();
     }
 
-    private void AtualizarProdutoItem(NfeEntradaItensDTO item, string? valor)
+    private void SelecionarProduto(Produtos produto)
     {
-        if (!int.TryParse(valor, out var id)) return;
-        item.IdProduto = id;
-        var produto = _produtos.FirstOrDefault(p => p.Id == id);
-        item.NomeProduto = produto?.Produto ?? string.Empty;
-        item.SiglaProduto = produto?.OUnidadeMedida?.Sigla ?? string.Empty;
+        var item = _itemEmPesquisa;
+        if (item is null) return;
+
+        _produtos.RemoveAll(p => p.Id == produto.Id);
+        _produtos.Add(produto);
+
+        item.IdProduto = produto.Id;
+        item.NomeProduto = produto.Produto;
+        item.SiglaProduto = produto.OUnidadeMedida?.Sigla ?? string.Empty;
+        _itemEmPesquisa = null;
         AtualizarBloqueioChave();
         RecalcularCustoFinal();
         StateHasChanged();
@@ -383,9 +395,10 @@ public partial class NfeEntradaModal
 
     // ── Condição de pagamento / Parcelas ──────────────────
 
-    private void OnCondicaoAlterada(ChangeEventArgs e)
+    private void SelecionarCondicao(CondicoesPagamentos cp)
     {
-        _dto.IdCondicaoPagamento = int.TryParse(e.Value?.ToString(), out var r) && r > 0 ? r : null;
+        _dto.IdCondicaoPagamento = cp.Id;
+        _dto.NomeCondicaoPagamento = cp.CondicaoPagamento;
         _dto.Parcelas = new();
         _parcelasGeradas = false;
         StateHasChanged();
@@ -518,46 +531,42 @@ public partial class NfeEntradaModal
 
     // ── Listas e callbacks ────────────────────────────────
 
-    private async Task CarregarListas()
-    {
-        _fornecedores = await FornecedoresService.ListarTudo(
-            new FiltroPessoasDto { StatusFiltro = "ativo" });
-        _transportadoras = await TransportadorasService.ListarTudo(
-            new FiltroPessoasDto { StatusFiltro = "ativo" });
-        _produtos = await ProdutosService.ListarTudo(
-            new FiltroProdutosDto { StatusFiltro = "ativo" });
-        _condicoes = await CondicoesPagamentosService.ListarTudo(
-            new FiltroBaseDto { StatusFiltro = "ativo" });
-    }
+    private Task<List<Fornecedores>> BuscarFornecedores(string? busca)
+        => FornecedoresService.ListarTudo(new FiltroPessoasDto { Busca = busca, StatusFiltro = "ativo" });
 
-    private async Task OnFornecedorSalvo(Fornecedores _)
+    private Task<List<Transportadoras>> BuscarTransportadoras(string? busca)
+        => TransportadorasService.ListarTudo(new FiltroPessoasDto { Busca = busca, StatusFiltro = "ativo" });
+
+    private Task<List<Produtos>> BuscarProdutos(string? busca)
+        => ProdutosService.ListarTudo(new FiltroProdutosDto { Busca = busca, StatusFiltro = "ativo" });
+
+    private Task<List<CondicoesPagamentos>> BuscarCondicoes(string? busca)
+        => CondicoesPagamentosService.ListarTudo(new FiltroBaseDto { Busca = busca, StatusFiltro = "ativo" });
+
+    private void SelecionarTransportadora(Transportadoras t)
     {
-        _fornecedores = await FornecedoresService.ListarTudo(
-            new FiltroPessoasDto { StatusFiltro = "ativo" });
+        _dto.IdTransportadora = t.Id;
+        _dto.NomeTransportadora = t.NomeRazaoSocial;
         StateHasChanged();
     }
 
-    private async Task OnTransportadoraSalva(Transportadoras _)
+    // Após cadastrar um novo registro, atualiza a lista da pesquisa que está aberta
+    private async Task OnFornecedorSalvo(Fornecedores _) => await _pesqFornecedor.Recarregar();
+    private async Task OnTransportadoraSalva(Transportadoras _) => await _pesqTransportadora.Recarregar();
+    private async Task OnProdutoSalvo(Produtos _) => await _pesqProduto.Recarregar();
+    private async Task OnCondicaoSalva(CondicoesPagamentos _) => await _pesqCondicao.Recarregar();
+
+    // Lupa: abre a pesquisa
+    private async Task AbrirPesquisaFornecedor() => await _pesqFornecedor.Abrir();
+    private async Task AbrirPesquisaTransportadora() => await _pesqTransportadora.Abrir();
+    private async Task AbrirPesquisaCondicao() => await _pesqCondicao.Abrir();
+    private async Task AbrirPesquisaProduto(NfeEntradaItensDTO item)
     {
-        _transportadoras = await TransportadorasService.ListarTudo(
-            new FiltroPessoasDto { StatusFiltro = "ativo" });
-        StateHasChanged();
+        _itemEmPesquisa = item;
+        await _pesqProduto.Abrir();
     }
 
-    private async Task OnProdutoSalvo(Produtos _)
-    {
-        _produtos = await ProdutosService.ListarTudo(
-            new FiltroProdutosDto { StatusFiltro = "ativo" });
-        StateHasChanged();
-    }
-
-    private async Task OnCondicaoSalva(CondicoesPagamentos _)
-    {
-        _condicoes = await CondicoesPagamentosService.ListarTudo(
-            new FiltroBaseDto { StatusFiltro = "ativo" });
-        StateHasChanged();
-    }
-
+    // Botão "Novo" dentro da pesquisa: abre o modal de cadastro
     private void AbrirModalFornecedor() => _modalFornecedor.AbrirNovo();
     private void AbrirModalTransportadora() => _modalTransportadora.AbrirNovo();
     private void AbrirModalProduto() => _modalProduto.AbrirNovo();

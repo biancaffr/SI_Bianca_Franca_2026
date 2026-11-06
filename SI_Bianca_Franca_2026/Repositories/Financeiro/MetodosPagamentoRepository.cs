@@ -49,7 +49,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Financeiro
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY m.metodo";
+            var sql = $"{SqlBase} {whereClause} ORDER BY m.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<MetodosPagamento>(sql, param)).ToList();

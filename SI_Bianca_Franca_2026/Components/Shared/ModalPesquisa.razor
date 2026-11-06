@@ -1,0 +1,123 @@
+@typeparam TItem
+
+@*
+    Modal genérico de pesquisa/seleção (usado pelo botão de lupa nos cadastros).
+
+    Uso:
+    <ModalPesquisa @ref="_pesqXxx" TItem="Xxx" Titulo="Pesquisar xxx" TextoNovo="Novo xxx"
+                   Carregar="BuscarXxx" AoSelecionar="SelecionarXxx" AoNovo="AbrirModalXxx">
+        <Cabecalho> <th>ID</th> <th>Nome</th> </Cabecalho>
+        <Linha Context="x"> <td>@x.Id</td> <td>@x.Nome</td> </Linha>
+    </ModalPesquisa>
+*@
+
+<Modal Visivel="_aberto" Titulo="@Titulo" Largura="@Largura" AoFechar="Fechar">
+    <div class="d-flex gap-2 mb-3">
+        <input class="form-control" placeholder="Pesquisar..."
+               @bind="_busca" @bind:event="oninput" @bind:after="CarregarAsync" />
+        @if (AoNovo.HasDelegate)
+        {
+            <button type="button" class="btn btn-primary text-nowrap" @onclick="Novo">
+                <i class="bi bi-plus-lg me-1"></i>@TextoNovo
+            </button>
+        }
+    </div>
+
+    @if (_carregando)
+    {
+        <p>Carregando...</p>
+    }
+    else if (!_itens.Any())
+    {
+        <p>@MensagemVazio</p>
+    }
+    else
+    {
+        <div style="max-height:55vh;overflow-y:auto;">
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        @Cabecalho
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _itens)
+                    {
+                        var itemLocal = item;
+                        <tr style="cursor:pointer;" @ondblclick="() => Selecionar(itemLocal)">
+                            @Linha(itemLocal)
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        @onclick="() => Selecionar(itemLocal)">
+                                    Selecionar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</Modal>
+
+@code {
+    [Parameter] public string Titulo { get; set; } = "Pesquisar";
+    [Parameter] public string Largura { get; set; } = "900px";
+    [Parameter] public string TextoNovo { get; set; } = "Novo";
+    [Parameter] public string MensagemVazio { get; set; } = "Nenhum registro encontrado.";
+
+    /// <summary>Busca os registros (já filtrando ativos) a partir do texto digitado.</summary>
+    [Parameter, EditorRequired] public Func<string?, Task<List<TItem>>> Carregar { get; set; } = default!;
+
+    [Parameter] public RenderFragment? Cabecalho { get; set; }
+    [Parameter] public RenderFragment<TItem>? Linha { get; set; }
+
+    [Parameter] public EventCallback<TItem> AoSelecionar { get; set; }
+
+    /// <summary>Se definido, exibe o botão "Novo" (quem usa abre o modal de cadastro).</summary>
+    [Parameter] public EventCallback AoNovo { get; set; }
+
+    private bool _aberto;
+    private bool _carregando;
+    private string _busca = string.Empty;
+    private List<TItem> _itens = new();
+
+    public async Task Abrir()
+    {
+        _busca = string.Empty;
+        _aberto = true;
+        await CarregarAsync();
+    }
+
+    /// <summary>Recarrega a lista mantendo a pesquisa (ex.: após cadastrar um novo registro).</summary>
+    public async Task Recarregar()
+    {
+        if (_aberto) await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        _carregando = true;
+        StateHasChanged();
+        var busca = string.IsNullOrWhiteSpace(_busca) ? null : _busca.Trim();
+        _itens = await Carregar(busca);
+        _carregando = false;
+        StateHasChanged();
+    }
+
+    private async Task Novo() => await AoNovo.InvokeAsync();
+
+    private async Task Selecionar(TItem item)
+    {
+        _aberto = false;
+        StateHasChanged();
+        await AoSelecionar.InvokeAsync(item);
+    }
+
+    private void Fechar()
+    {
+        _aberto = false;
+        StateHasChanged();
+    }
+}

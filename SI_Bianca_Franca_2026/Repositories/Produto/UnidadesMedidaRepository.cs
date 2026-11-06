@@ -52,7 +52,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY u.unidade_medida";
+            var sql = $"{SqlBase} {whereClause} ORDER BY u.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<UnidadesMedida>(sql, param)).ToList();

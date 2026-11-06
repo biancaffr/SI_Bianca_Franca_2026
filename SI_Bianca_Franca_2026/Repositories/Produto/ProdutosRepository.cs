@@ -84,7 +84,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY p.produto";
+            var sql = $"{SqlBase} {whereClause} ORDER BY p.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Produtos, Categorias, UnidadesMedida, Produtos>(

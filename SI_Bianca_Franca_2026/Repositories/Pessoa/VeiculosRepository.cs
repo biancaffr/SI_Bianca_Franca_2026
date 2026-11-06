@@ -76,7 +76,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Pessoa
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY v.placa";
+            var sql = $"{SqlBase} {whereClause} ORDER BY v.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             var resultado = await conexao.QueryAsync<Veiculos, Estados, Transportadoras, Veiculos>(

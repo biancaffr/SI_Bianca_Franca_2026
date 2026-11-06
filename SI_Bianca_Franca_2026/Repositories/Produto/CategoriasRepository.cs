@@ -48,7 +48,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 ? "WHERE " + string.Join(" AND ", where)
                 : string.Empty;
 
-            var sql = $"{SqlBase} {whereClause} ORDER BY c.categoria";
+            var sql = $"{SqlBase} {whereClause} ORDER BY c.id";
 
             using var conexao = new MySqlConnection(_stringConexao);
             return (await conexao.QueryAsync<Categorias>(sql, param)).ToList();
