@@ -39,7 +39,6 @@ public partial class Index
             Id = unidade.Id,
             Sigla = unidade.Sigla,
             UnidadeMedida = unidade.UnidadeMedida,
-            Categoria = unidade.Categoria,
             Ativo = unidade.Ativo,
             DataCriacao = unidade.DataCriacao,
             DataUltimaAlteracao = unidade.DataUltimaAlteracao,

@@ -65,7 +65,6 @@ namespace SI_Bianca_Franca_2026.Services.Produto
         {
             e.Sigla = e.Sigla.Trim().ToUpperInvariant();
             e.UnidadeMedida = e.UnidadeMedida.Trim().ToUpperInvariant();
-            e.Categoria = e.Categoria.Trim().ToUpperInvariant();
         }
     }
 }

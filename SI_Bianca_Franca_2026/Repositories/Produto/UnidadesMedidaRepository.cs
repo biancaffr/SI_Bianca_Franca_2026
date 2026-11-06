@@ -19,7 +19,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
                 u.id,
                 u.sigla,
                 u.unidade_medida            AS UnidadeMedida,
-                u.categoria,
                 u.data_criacao              AS DataCriacao,
                 u.data_ultima_alteracao     AS DataUltimaAlteracao,
                 u.id_usuario_ultima_alteracao AS IdUsuarioUltimaAlteracao,
@@ -43,8 +42,7 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             if (!string.IsNullOrWhiteSpace(filtro.Busca))
             {
                 where.Add(@"(u.sigla LIKE @Busca
-                  OR u.unidade_medida LIKE @Busca
-                  OR u.categoria LIKE @Busca)");
+                  OR u.unidade_medida LIKE @Busca)");
                 param.Add("Busca", $"%{filtro.Busca}%");
             }
 
@@ -68,10 +66,10 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
         {
             using var conexao = new MySqlConnection(_stringConexao);
             string sql = @"INSERT INTO unidades_medida
-                           (sigla, unidade_medida, categoria, data_criacao, data_ultima_alteracao,
+                           (sigla, unidade_medida, data_criacao, data_ultima_alteracao,
                             id_usuario_ultima_alteracao, ativo)
                            VALUES
-                           (@Sigla, @UnidadeMedida, @Categoria, @DataCriacao, @DataUltimaAlteracao,
+                           (@Sigla, @UnidadeMedida, @DataCriacao, @DataUltimaAlteracao,
                             @IdUsuarioUltimaAlteracao, @Ativo)";
             await conexao.ExecuteAsync(sql, entity);
         }
@@ -82,7 +80,6 @@ namespace SI_Bianca_Franca_2026.Repositories.Produto
             string sql = @"UPDATE unidades_medida SET
                            sigla                         = @Sigla,
                            unidade_medida                = @UnidadeMedida,
-                           categoria                     = @Categoria,
                            data_ultima_alteracao         = @DataUltimaAlteracao,
                            id_usuario_ultima_alteracao   = @IdUsuarioUltimaAlteracao,
                            ativo                         = @Ativo

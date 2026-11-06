@@ -37,7 +37,6 @@ else
                 <th>ID</th>
                 <th>Sigla</th>
                 <th>Unidade de Medida</th>
-                <th>Categoria</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
@@ -49,7 +48,6 @@ else
                     <td>@u.Id</td>
                     <td>@u.Sigla</td>
                     <td>@u.UnidadeMedida</td>
-                    <td>@u.Categoria</td>
                     <td>
                         <span class="badge @(u.Ativo ? "bg-success" : "bg-danger")">
                             @(u.Ativo ? "Ativo" : "Inativo")

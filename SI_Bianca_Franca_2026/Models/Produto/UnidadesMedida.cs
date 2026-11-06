@@ -6,7 +6,6 @@ namespace SI_Bianca_Franca_2026.Models.Produto
     {
         public string Sigla { get; set; } = string.Empty;
         public string UnidadeMedida { get; set; } = string.Empty;
-        public string Categoria { get; set; } = string.Empty;
     }
 
 }

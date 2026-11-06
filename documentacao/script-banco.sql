@@ -288,14 +288,12 @@ CREATE TABLE IF NOT EXISTS unidades_medida (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   sigla VARCHAR(5) NOT NULL UNIQUE,
   unidade_medida VARCHAR(30) NOT NULL,
-  categoria VARCHAR(30) NOT NULL,
   data_criacao DATETIME(6) NOT NULL,
   data_ultima_alteracao DATETIME(6) NOT NULL,
   id_usuario_ultima_alteracao INT NOT NULL,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   CONSTRAINT ck_unidades_medida_sigla CHECK (LENGTH(TRIM(sigla)) > 0),
   CONSTRAINT ck_unidades_medida_descricao CHECK (LENGTH(TRIM(unidade_medida)) > 0),
-  CONSTRAINT ck_unidades_medida_categoria CHECK (LENGTH(TRIM(categoria)) > 0),
   FOREIGN KEY (id_usuario_ultima_alteracao) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -41,7 +41,6 @@ public partial class UnidadesMedidaModal
                 Id = _dto.Id,
                 Sigla = _dto.Sigla,
                 UnidadeMedida = _dto.UnidadeMedida,
-                Categoria = _dto.Categoria,
                 Ativo = _dto.Ativo
             };
 

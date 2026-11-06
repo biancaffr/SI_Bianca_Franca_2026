@@ -14,10 +14,6 @@ namespace SI_Bianca_Franca_2026.DTOs.Produto
         [MaxLength(30, ErrorMessage = "Máximo de 30 caracteres")]
         public string UnidadeMedida { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Campo obrigatório")]
-        [MaxLength(30, ErrorMessage = "Máximo de 30 caracteres")]
-        public string Categoria { get; set; } = string.Empty;
-
         public bool Ativo { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime DataUltimaAlteracao { get; set; }

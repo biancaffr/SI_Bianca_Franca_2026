@@ -39,11 +39,6 @@
                 <ValidationMessage For="@(() => _dto.UnidadeMedida)" class="text-danger" />
             </div>
 
-            <div class="form-group" style="flex: 1; min-width: 200px;">
-                <label class="obrigatorio">Categoria</label>
-                <InputText class="form-control" @bind-Value="_dto.Categoria" maxlength="30"/>
-                <ValidationMessage For="@(() => _dto.Categoria)" class="text-danger" />
-            </div>
         @if (_dto.Id != 0)
         {
             <div class="form-group" style="width: 100px;">
