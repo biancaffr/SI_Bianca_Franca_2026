@@ -1,5 +1,4 @@
 ﻿using SI_Bianca_Franca_2026.DTOs.Filtros;
-using SI_Bianca_Franca_2026.Models.Pessoa;
 using SI_Bianca_Franca_2026.Models.Produto;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;

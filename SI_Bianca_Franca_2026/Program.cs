@@ -1,11 +1,13 @@
 using SI_Bianca_Franca_2026.Components;
 using SI_Bianca_Franca_2026.Repositories.Financeiro;
 using SI_Bianca_Franca_2026.Repositories.Localizacao;
+using SI_Bianca_Franca_2026.Repositories.NfeEntrada;
 using SI_Bianca_Franca_2026.Repositories.Pessoa;
 using SI_Bianca_Franca_2026.Repositories.Produto;
 using SI_Bianca_Franca_2026.Services.App;
 using SI_Bianca_Franca_2026.Services.Financeiro;
 using SI_Bianca_Franca_2026.Services.Localizacao;
+using SI_Bianca_Franca_2026.Services.NfeEntrada;
 using SI_Bianca_Franca_2026.Services.Pessoa;
 using SI_Bianca_Franca_2026.Services.Produto;
 
@@ -57,6 +59,9 @@ builder.Services.AddScoped<CondicoesPagamentosService>();
 
 builder.Services.AddScoped<ProdutosRepository>();
 builder.Services.AddScoped<ProdutosService>();
+
+builder.Services.AddScoped<NfeEntradaRepository>();
+builder.Services.AddScoped<NfeEntradaService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,80 @@
+﻿@page "/nfe-entrada"
+@rendermode InteractiveServer
+@using SI_Bianca_Franca_2026.Models.NfeEntrada
+@using SI_Bianca_Franca_2026.Components.Shared.Modais.NfeEntrada
+
+<div class="mb-3">
+    <h3 class="mb-0">NF-e de Entrada</h3>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <input class="form-control" style="max-width:300px;" placeholder="Pesquisar..."
+           @bind="_filtro.Busca" @bind:event="oninput" @bind:after="OnFiltroAlterado" />
+
+    <select class="w-auto" @bind="_filtro.StatusFiltro" @bind:after="OnFiltroAlterado">
+        <option value="ativo">Ativas</option>
+        <option value="inativo">Canceladas</option>
+        <option value="todos">Todas</option>
+    </select>
+
+    <button class="btn btn-primary" @onclick="AbrirNovo">
+        <i class="bi bi-plus-lg me-1"></i>Nova NF-e Entrada
+    </button>
+</div>
+
+@if (_notas is null)
+{
+    <p>Carregando...</p>
+}
+else if (!_notas.Any())
+{
+    <p>Nenhuma nota encontrada.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nº</th>
+                <th>Modelo</th>
+                <th>Série</th>
+                <th>Fornecedor</th>
+                <th>Data Emissão</th>
+                <th>Data Chegada</th>
+                <th>Total</th>
+                <th>Situação</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var n in _notas)
+            {
+                var notaLocal = n;
+                <tr>
+                    <td>@n.Numero</td>
+                    <td>@n.Modelo</td>
+                    <td>@n.Serie</td>
+                    <td>@n.OFornecedor?.NomeRazaoSocial</td>
+                    <td>@n.DataEmissao.ToString("dd/MM/yyyy")</td>
+                    <td>@(n.DataChegada?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td>R$ @n.ValorTotal.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                    <td>
+                        <span class="badge @BadgeSituacao(n.Situacao)">
+                            @FormatarSituacao(n.Situacao)
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => AbrirVisualizar(notaLocal)">
+                            Visualizar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<NfeEntradaModal @ref="_modal"
+                 AoSalvarComSucesso="OnSalva"
+                 AoCancelarComSucesso="OnCancelada" />
