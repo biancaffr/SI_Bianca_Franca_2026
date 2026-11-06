@@ -176,9 +176,9 @@ public partial class CondicoesPagamentosModal
                 return;
             }
 
-            if (Math.Abs(TotalPercentual - 100) > 0.01m)
+            if (TotalPercentual != 100m)
             {
-                _erro = $"A soma dos percentuais deve ser 100%. Total atual: {TotalPercentual.ToString("0.##", _ptBR)}%";
+                _erro = $"A soma dos percentuais deve ser exatamente 100%. Total atual: {TotalPercentual.ToString("0.####", _ptBR)}%";
                 return;
             }
 

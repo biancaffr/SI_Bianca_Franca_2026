@@ -135,11 +135,11 @@
                     <tr>
                         <td colspan="2" class="text-end"><strong>Total:</strong></td>
                         <td>
-                            <span class="badge @(Math.Abs(TotalPercentual - 100) <= 0.0001m ? "bg-success" : "bg-danger")"
+                            <span class="badge @(TotalPercentual == 100m ? "bg-success" : "bg-danger")"
                                   style="font-size: 13px;">
                                 @TotalPercentual.ToString("0.####", _ptBR)%
                             </span>
-                            @if (Math.Abs(TotalPercentual - 100) > 0.01m)
+                            @if (TotalPercentual != 100m)
                             {
                                 <div class="text-danger" style="font-size: 12px;">
                                     @(TotalPercentual < 100

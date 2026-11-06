@@ -83,8 +83,8 @@ namespace SI_Bianca_Franca_2026.Services.Financeiro
                 throw new Exception("A condição de pagamento deve ter ao menos uma parcela.");
 
             var total = parcelas.Sum(p => p.Percentual);
-            if (Math.Abs(total - 100) > 0.01m)
-                throw new Exception($"A soma dos percentuais deve totalizar 100%. Total atual: {total:N2}%");
+            if (total != 100m)
+                throw new Exception($"A soma dos percentuais deve totalizar exatamente 100%. Total atual: {total:0.####}%");
         }
 
         private void PreencherInsercaoParcelas(List<CondicoesPagamentosParcelas> parcelas, int idCondicao)
