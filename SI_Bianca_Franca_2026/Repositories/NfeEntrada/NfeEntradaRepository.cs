@@ -151,6 +151,7 @@ namespace SI_Bianca_Franca_2026.Repositories.NfeEntrada
                     ni.rateio_seguro        AS RateioSeguro,
                     ni.rateio_outras        AS RateioOutras,
                     ni.custo_final          AS CustoFinal,
+                    ni.custo_medio          AS CustoMedio,
                     ni.data_criacao         AS DataCriacao,
                     ni.data_ultima_alteracao AS DataUltimaAlteracao,
                     p.id                    AS ProdutoId,
@@ -198,12 +199,12 @@ namespace SI_Bianca_Franca_2026.Repositories.NfeEntrada
                 (nota_numero, nota_modelo, nota_serie, id_fornecedor, id_produto,
                  sequencia, quantidade, valor_unitario, valor_desconto,
                  percentual_desconto, valor_total, rateio_frete, rateio_seguro,
-                 rateio_outras, custo_final, data_criacao, data_ultima_alteracao)
+                 rateio_outras, custo_final, custo_medio, data_criacao, data_ultima_alteracao)
                 VALUES
                 (@NotaNumero, @NotaModelo, @NotaSerie, @IdFornecedor, @IdProduto,
                  @Sequencia, @Quantidade, @ValorUnitario, @ValorDesconto,
                  @PercentualDesconto, @ValorTotal, @RateioFrete, @RateioSeguro,
-                 @RateioOutras, @CustoFinal, @DataCriacao, @DataUltimaAlteracao)",
+                 @RateioOutras, @CustoFinal, @CustoMedio, @DataCriacao, @DataUltimaAlteracao)",
                 itens);
         }
 

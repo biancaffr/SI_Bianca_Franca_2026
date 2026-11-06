@@ -74,6 +74,7 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
 
             // Rateio de frete/seguro/outras por item proporcional ao valor total
             var totalItens = itens.Sum(i => i.ValorTotal);
+            var produtos = new Dictionary<int, Models.Produto.Produtos>();
             foreach (var item in itens)
             {
                 var proporcao = totalItens > 0 ? item.ValorTotal / totalItens : 0;
@@ -83,6 +84,20 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
                 item.CustoFinal = Math.Round(
                     (item.ValorTotal + item.RateioFrete + item.RateioSeguro + item.RateioOutras)
                     / item.Quantidade, 4);
+
+                // Custo médio ponderado (usa saldo/custo do produto ANTES desta entrada)
+                if (!produtos.TryGetValue(item.IdProduto, out var produto))
+                {
+                    produto = await _produtosRepository.PesquisarAsync(item.IdProduto)
+                        ?? throw new Exception("Produto não encontrado.");
+                    produtos[item.IdProduto] = produto;
+                }
+                item.CustoMedio = CalcularCustoMedio(
+                    produto.Saldo, produto.PrecoCusto ?? 0, item.Quantidade, item.CustoFinal ?? 0);
+                produto.Saldo += item.Quantidade;
+                produto.PrecoCusto = Math.Round(item.CustoMedio.Value, 2);
+                produto.ValorUltimaCompra = Math.Round(item.CustoFinal ?? 0, 2);
+
                 item.NotaNumero = entity.Numero;
                 item.NotaModelo = entity.Modelo;
                 item.NotaSerie = entity.Serie;
@@ -104,21 +119,26 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
             await _repository.InserirAsync(entity);
             await _repository.InserirItensAsync(itens);
 
-            // Atualiza saldo e custo dos produtos
-            foreach (var item in itens)
-            {
-                var produto = await _produtosRepository.PesquisarAsync(item.IdProduto);
-                if (produto != null)
-                {
-                    produto.Saldo += item.Quantidade;
-                    produto.ValorUltimaCompra = (decimal?)item.CustoFinal ?? produto.ValorUltimaCompra;
-                    await _produtosRepository.AtualizarAsync(produto);
-                }
-            }
+            // Grava saldo, custo médio (preco_custo) e valor da última compra dos produtos
+            foreach (var produto in produtos.Values)
+                await _produtosRepository.AtualizarAsync(produto);
 
             // Gera contas a pagar se houver condição de pagamento
             if (entity.IdCondicaoPagamento.HasValue)
                 await GerarContasPagar(entity);
+        }
+
+        /// <summary>
+        /// Custo médio ponderado: (saldo x custo atual + qtde x custo unitário) / (saldo + qtde).
+        /// Saldo negativo é tratado como zero.
+        /// </summary>
+        public static decimal CalcularCustoMedio(
+            decimal saldo, decimal custoAtual, decimal quantidade, decimal custoUnitario)
+        {
+            saldo = Math.Max(0, saldo);
+            var novoSaldo = saldo + quantidade;
+            if (novoSaldo <= 0) return 0;
+            return Math.Round((saldo * custoAtual + quantidade * custoUnitario) / novoSaldo, 4);
         }
 
         public async Task Cancelar(

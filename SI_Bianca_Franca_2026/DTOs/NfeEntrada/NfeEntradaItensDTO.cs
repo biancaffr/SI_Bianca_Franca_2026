@@ -10,7 +10,9 @@
         public decimal ValorUnitario { get; set; }
         public decimal PercentualDesconto { get; set; }
         public decimal CustoFinal { get; set; }
-        public decimal ValorDesconto { get; set; } 
-        public decimal ValorTotal => Math.Round((Quantidade * ValorUnitario) - ValorDesconto, 4);
+        public decimal CustoMedio { get; set; }
+        // Desconto por UNIDADE
+        public decimal ValorDesconto { get; set; }
+        public decimal ValorTotal => Math.Round(Quantidade * (ValorUnitario - ValorDesconto), 4);
     }
 }

@@ -132,7 +132,8 @@ public partial class NfeEntradaModal
                 ValorUnitario = i.ValorUnitario,
                 PercentualDesconto = i.PercentualDesconto,
                 ValorDesconto = i.ValorDesconto,
-                CustoFinal = i.CustoFinal ?? 0
+                CustoFinal = i.CustoFinal ?? 0,
+                CustoMedio = i.CustoMedio ?? 0
             }).ToList()
         };
 
@@ -288,23 +289,35 @@ public partial class NfeEntradaModal
         StateHasChanged();
     }
 
+    // Incrementado quando o texto digitado no desconto é vazio/inválido, para o campo
+    // ser recriado e voltar a mostrar 0 (o Blazor não redesenha se o valor do modelo não mudou)
+    private int _versaoDesconto;
+
     private void AtualizarPercentualDesconto(NfeEntradaItensDTO item, string? texto)
     {
-        if (!decimal.TryParse(texto, NumberStyles.Any, _ptBR, out var pct)) return;
+        if (!decimal.TryParse(texto, NumberStyles.Any, _ptBR, out var pct))
+        {
+            pct = 0;
+            _versaoDesconto++;
+        }
         pct = Math.Max(0, Math.Min(100, pct));
         item.PercentualDesconto = pct;
-        item.ValorDesconto = Math.Round(item.Quantidade * item.ValorUnitario * pct / 100, 4);
+        item.ValorDesconto = Math.Round(item.ValorUnitario * pct / 100, 4); // por unidade
         RecalcularCustoFinal();
         StateHasChanged();
     }
 
     private void AtualizarValorDesconto(NfeEntradaItensDTO item, string? texto)
     {
-        if (!decimal.TryParse(texto, NumberStyles.Any, _ptBR, out var val)) return;
+        if (!decimal.TryParse(texto, NumberStyles.Any, _ptBR, out var val))
+        {
+            val = 0;
+            _versaoDesconto++;
+        }
         val = Math.Max(0, val);
+        val = Math.Min(val, item.ValorUnitario); // desconto por unidade não pode passar do valor unitário
         item.ValorDesconto = val;
-        var base_ = item.Quantidade * item.ValorUnitario;
-        item.PercentualDesconto = base_ > 0 ? Math.Round(val / base_ * 100, 2) : 0;
+        item.PercentualDesconto = item.ValorUnitario > 0 ? Math.Round(val / item.ValorUnitario * 100, 2) : 0;
         RecalcularCustoFinal();
         StateHasChanged();
     }
@@ -330,6 +343,25 @@ public partial class NfeEntradaModal
                 ? Math.Round((item.ValorTotal + rateioFrete + rateioSeguro + rateioOutras)
                     / item.Quantidade, 4)
                 : 0;
+        }
+        RecalcularCustoMedio();
+    }
+
+    // Custo médio ponderado usando saldo e custo atuais do produto (mesmo cálculo do Service)
+    private void RecalcularCustoMedio()
+    {
+        var estado = new Dictionary<int, (decimal Saldo, decimal Custo)>();
+        foreach (var item in _dto.Itens)
+        {
+            if (item.IdProduto <= 0 || item.Quantidade <= 0) { item.CustoMedio = 0; continue; }
+            if (!estado.TryGetValue(item.IdProduto, out var e))
+            {
+                var p = _produtos.FirstOrDefault(x => x.Id == item.IdProduto);
+                e = (p?.Saldo ?? 0, p?.PrecoCusto ?? 0);
+            }
+            item.CustoMedio = NfeEntradaService.CalcularCustoMedio(
+                e.Saldo, e.Custo, item.Quantidade, item.CustoFinal);
+            estado[item.IdProduto] = (e.Saldo + item.Quantidade, Math.Round(item.CustoMedio, 2));
         }
     }
 

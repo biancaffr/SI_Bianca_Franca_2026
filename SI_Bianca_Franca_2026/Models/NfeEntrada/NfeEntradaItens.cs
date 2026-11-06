@@ -19,6 +19,7 @@ namespace SI_Bianca_Franca_2026.Models.NfeEntrada
         public decimal RateioSeguro { get; set; }
         public decimal RateioOutras { get; set; }
         public decimal? CustoFinal { get; set; }
+        public decimal? CustoMedio { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime DataUltimaAlteracao { get; set; }
 

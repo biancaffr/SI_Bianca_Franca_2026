@@ -81,6 +81,7 @@
                             <th class="text-end" style="width:120px;">Vlr. Desc.</th>
                             <th class="text-end" style="width:120px;">Total Item</th>
                             <th class="text-end" style="width:130px;">Custo Unit. Final</th>
+                            <th class="text-end" style="width:130px;">Custo Médio</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,6 +96,7 @@
                                 <td class="text-end">R$ @item.ValorDesconto.ToString("0.####", _ptBR)</td>
                                 <td class="text-end">R$ @item.ValorTotal.ToString("0.####", _ptBR)</td>
                                 <td class="text-end">R$ @item.CustoFinal.ToString("0.####", _ptBR)</td>
+                                <td class="text-end">R$ @item.CustoMedio.ToString("0.####", _ptBR)</td>
                             </tr>
                         }
                     </tbody>
@@ -102,7 +104,7 @@
                         <tr>
                             <td colspan="6" class="text-end fw-semibold">Total dos produtos:</td>
                             <td class="text-end fw-bold">R$ @_dto.ValorProdutos.ToString("0.##", _ptBR)</td>
-                            <td></td>
+                            <td colspan="2"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -364,6 +366,7 @@
                             <th class="text-end" style="width:110px;">Vlr. Desc.</th>
                             <th class="text-end" style="width:110px;">Total Item</th>
                             <th class="text-end" style="width:120px;">Custo Unit.</th>
+                            <th class="text-end" style="width:120px;">Custo Médio</th>
                             <th style="width:36px;"></th>
                         </tr>
                     </thead>
@@ -406,18 +409,21 @@
                                 </td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
+                                           @key="@($"pct-{itemLocal.Sequencia}-{_versaoDesconto}")"
                                            disabled="@CamposBloqueados"
                                            value="@itemLocal.PercentualDesconto.ToString(_ptBR)"
                                            @onchange="e => AtualizarPercentualDesconto(itemLocal, e.Value?.ToString())" />
                                 </td>
                                 <td>
                                     <input class="form-control form-control-sm text-end" type="text"
+                                           @key="@($"vlr-{itemLocal.Sequencia}-{_versaoDesconto}")"
                                            disabled="@CamposBloqueados"
                                            value="@itemLocal.ValorDesconto.ToString(_ptBR)"
                                            @onchange="e => AtualizarValorDesconto(itemLocal, e.Value?.ToString())" />
                                 </td>
                                 <td class="text-end">R$ @itemLocal.ValorTotal.ToString("0.####", _ptBR)</td>
                                 <td class="text-end">R$ @itemLocal.CustoFinal.ToString("0.####", _ptBR)</td>
+                                <td class="text-end">R$ @itemLocal.CustoMedio.ToString("0.####", _ptBR)</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                             disabled="@(CamposBloqueados || ProdutosBloqueados)"
@@ -432,7 +438,7 @@
                         <tr>
                             <td colspan="6" class="text-end fw-semibold">Total dos produtos:</td>
                             <td class="text-end fw-bold">R$ @TotalProdutos.ToString("0.##", _ptBR)</td>
-                            <td colspan="2"></td>
+                            <td colspan="3"></td>
                         </tr>
                     </tfoot>
                 </table>
