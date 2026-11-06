@@ -329,3 +329,7 @@ FodyWeavers.xsd
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Scripts/dumps de banco gerados localmente (não versionar)
+documentacao/dump_banco_atualizado.sql
+documentacao/migracao_*.sql
