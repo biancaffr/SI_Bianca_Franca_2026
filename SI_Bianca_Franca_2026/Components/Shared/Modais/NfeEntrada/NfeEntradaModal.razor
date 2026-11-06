@@ -100,14 +100,14 @@
                             </tr>
                         }
                     </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="6" class="text-end fw-semibold">Total dos produtos:</td>
-                            <td class="text-end fw-bold">R$ @_dto.ValorProdutos.ToString("0.##", _ptBR)</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
                 </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:12px;margin-bottom:12px;">
+                <div class="form-group" style="width:220px;">
+                    <label class="fw-semibold">Total dos produtos</label>
+                    <input class="form-control fw-bold text-end" disabled
+                           value="R$ @_dto.ValorProdutos.ToString("0.##", _ptBR)" />
+                </div>
             </div>
         </div>
 
@@ -419,14 +419,14 @@
                             </tr>
                         }
                     </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="6" class="text-end fw-semibold">Total dos produtos:</td>
-                            <td class="text-end fw-bold">R$ @TotalProdutos.ToString("0.##", _ptBR)</td>
-                            <td colspan="3"></td>
-                        </tr>
-                    </tfoot>
                 </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:12px;margin-bottom:12px;">
+                <div class="form-group" style="width:220px;">
+                    <label class="fw-semibold">Total dos produtos</label>
+                    <input class="form-control fw-bold text-end" disabled
+                           value="R$ @TotalProdutos.ToString("0.##", _ptBR)" />
+                </div>
             </div>
         </div>
 

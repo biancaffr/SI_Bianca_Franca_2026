@@ -45,11 +45,12 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
             if (condicao is null || !condicao.Parcelas.Any()) return new();
 
             var parcelas = new List<ParcelaVisualizacaoDTO>();
-            int total = condicao.Parcelas.Count;
+            var ordenadas = condicao.Parcelas.OrderBy(x => x.NumeroParcela).ToList();
+            int total = ordenadas.Count;
 
-            foreach (var p in condicao.Parcelas.OrderBy(x => x.NumeroParcela))
+            foreach (var p in ordenadas)
             {
-                var valor = Math.Round(valorTotal * p.Percentual / 100, 2);
+                var valor = Math.Round(valorTotal * p.Percentual / 100, 2, MidpointRounding.AwayFromZero);
                 var vencimento = dataEmissao.AddDays(p.PrazoDias);
                 parcelas.Add(new ParcelaVisualizacaoDTO
                 {
@@ -60,6 +61,14 @@ namespace SI_Bianca_Franca_2026.Services.NfeEntrada
                     MetodoPagamento = p.OMetodoPagamento?.Metodo ?? string.Empty
                 });
             }
+
+            // A parcela de MAIOR percentual (a primeira, em caso de empate) compensa a diferença
+            // de centavos, para que a soma das parcelas feche exatamente com o total da nota.
+            var maiorPercentual = ordenadas.Max(x => x.Percentual);
+            var idxCompensa = ordenadas.FindIndex(x => x.Percentual == maiorPercentual);
+            var somaDasOutras = parcelas.Where((_, i) => i != idxCompensa).Sum(x => x.Valor);
+            parcelas[idxCompensa].Valor = Math.Round(valorTotal, 2, MidpointRounding.AwayFromZero) - somaDasOutras;
+
             return parcelas;
         }
 
